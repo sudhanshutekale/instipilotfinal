@@ -54,6 +54,17 @@ export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [clientUser, setClientUser] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const match = document.cookie.match(/instipilot_session=([^;]+)/);
+      if (match && match[1]) {
+        const parsed = JSON.parse(decodeURIComponent(match[1]));
+        if (parsed) setClientUser(parsed);
+      }
+    } catch {}
+  }, []);
 
   const fetchDashboard = async () => {
     try {
@@ -86,6 +97,7 @@ export default function DashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: msg.id,
           studentId: msg.student_id,
           recipientPhone: msg.recipient_phone,
           recipientName: msg.recipient_name,
@@ -121,7 +133,13 @@ export default function DashboardPage() {
     );
   }
 
-  const user = data?.user;
+  const user = data?.user || clientUser || {
+    name: 'Priya Sharma',
+    role: 'owner',
+    email: 'owner@instipilot.com',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
+  };
+  const displayName = user?.name || (user?.role === 'owner' ? 'Priya Sharma' : 'Staff');
   const kpis = data?.kpis;
   const alerts = data?.alerts;
   const dualRiskStudents = alerts?.dualRiskStudents || [];
@@ -132,23 +150,38 @@ export default function DashboardPage() {
     <div className="space-y-8 pb-12">
       {/* Top Welcome & Mission Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-cyan-950/40 via-slate-900/90 to-violet-950/30 backdrop-blur-xl shadow-glass">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-cyan-400">
-              Operations Live Radar &bull; Academic Year 2026-27
-            </span>
+        <div className="flex items-center gap-3.5">
+          <div className="relative flex-shrink-0">
+            <img
+              src={user?.avatarUrl || (user?.role === 'owner' ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150')}
+              alt={displayName}
+              className="w-12 h-12 rounded-xl object-cover border-2 border-cyan-400/40 shadow-neon-cyan"
+            />
+            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-slate-950"></span>
           </div>
-          <h2 className="font-display text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Welcome back, {user?.name || 'Administrator'}
-          </h2>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Role: <span className="text-cyan-300 font-semibold uppercase">{user?.role}</span> &bull; 
-            {user?.role === 'trainer' && ' Showing your pedagogical sessions and student rosters.'}
-            {user?.role === 'counselor' && ' Monitoring student attendance anomalies & intervention alerts.'}
-            {user?.role === 'accounts' && ' Tracking EMI collections, payments, and bank reconciliation.'}
-            {user?.role === 'owner' && ' Master command center with full institutional oversight.'}
-          </p>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-[11px] font-mono uppercase tracking-widest text-cyan-400">
+                Operations Live Radar &bull; Academic Year 2026-27
+              </span>
+            </div>
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center flex-wrap gap-2">
+              <span>Welcome back, {displayName}</span>
+              {user?.role === 'owner' && (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 font-semibold shadow-sm">
+                  Owner & Director
+                </span>
+              )}
+            </h2>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Role: <span className="text-cyan-300 font-semibold uppercase">{user?.role || 'owner'}</span> &bull; 
+              {user?.role === 'trainer' && ' Showing your pedagogical sessions and student rosters.'}
+              {user?.role === 'counselor' && ' Monitoring student attendance anomalies & intervention alerts.'}
+              {user?.role === 'accounts' && ' Tracking EMI collections, payments, and bank reconciliation.'}
+              {(!user?.role || user?.role === 'owner') && ' Master command center with full institutional oversight.'}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 font-mono text-xs">
@@ -159,63 +192,79 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Cards Row */}
+      {/* KPI Cards Row — All fully interactive navigation buttons */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Active Students */}
-        <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-cyan-500/40 transition-colors">
+        {/* KPI 1: Active Students Button */}
+        <Link 
+          href="/students"
+          className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-cyan-500/40 hover:bg-slate-900/90 transition-all block cursor-pointer"
+        >
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-medium uppercase font-mono tracking-wider">Active Students</span>
-            <div className="p-2 rounded-xl bg-cyan-950/60 text-cyan-400 border border-cyan-500/20">
+            <div className="p-2 rounded-xl bg-cyan-950/60 text-cyan-400 border border-cyan-500/20 group-hover:scale-110 transition-transform">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="font-display text-3xl font-bold text-white mb-1">
             {kpis?.activeStudents ?? '—'}
           </div>
-          <div className="text-[11px] text-emerald-400 flex items-center gap-1 font-mono">
-            <TrendingUp className="w-3 h-3" /> 100% verified enrollments
+          <div className="text-[11px] text-cyan-400 font-mono flex items-center justify-between">
+            <span className="flex items-center gap-1 text-emerald-400">
+              <TrendingUp className="w-3 h-3" /> 100% verified enrollments
+            </span>
+            <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-cyan-400" />
           </div>
-        </div>
+        </Link>
 
-        {/* KPI 2: Ongoing Batches */}
-        <Link href="/batches?status=ongoing" className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-violet-500/40 transition-colors block">
+        {/* KPI 2: Active Batches Button */}
+        <Link 
+          href="/batches?status=ongoing" 
+          className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-violet-500/40 hover:bg-slate-900/90 transition-all block cursor-pointer"
+        >
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-medium uppercase font-mono tracking-wider">Active Batches</span>
-            <div className="p-2 rounded-xl bg-violet-950/60 text-violet-400 border border-violet-500/20">
+            <div className="p-2 rounded-xl bg-violet-950/60 text-violet-400 border border-violet-500/20 group-hover:scale-110 transition-transform">
               <Layers className="w-4 h-4" />
             </div>
           </div>
           <div className="font-display text-3xl font-bold text-white mb-1">
             {kpis?.activeBatches ?? '—'}
           </div>
-          <div className="text-[11px] text-violet-300 font-mono flex items-center gap-1">
+          <div className="text-[11px] text-violet-300 font-mono flex items-center justify-between">
             <span>Across 5 physical & virtual labs</span>
-            <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-violet-400" />
           </div>
         </Link>
 
-        {/* KPI 3: Attendance Rate */}
-        <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-emerald-500/40 transition-colors">
+        {/* KPI 3: Attendance Rate Button */}
+        <Link 
+          href="/attendance"
+          className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-emerald-500/40 hover:bg-slate-900/90 transition-all block cursor-pointer"
+        >
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-medium uppercase font-mono tracking-wider">Attendance Rate</span>
-            <div className="p-2 rounded-xl bg-emerald-950/60 text-emerald-400 border border-emerald-500/20">
+            <div className="p-2 rounded-xl bg-emerald-950/60 text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
               <UserCheck className="w-4 h-4" />
             </div>
           </div>
           <div className="font-display text-3xl font-bold text-white mb-1">
             {kpis?.attendanceRate ?? 88}%
           </div>
-          <div className="text-[11px] text-slate-400 font-mono">
-            Classroom + Zoom WebSDK combined
+          <div className="text-[11px] text-emerald-400/90 font-mono flex items-center justify-between">
+            <span className="text-slate-400">Classroom + Zoom combined</span>
+            <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-emerald-400" />
           </div>
-        </div>
+        </Link>
 
-        {/* KPI 4: Financial or Teaching Metric */}
+        {/* KPI 4: Fee Collections / Academic Health Button */}
         {isFinancialRole ? (
-          <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-amber-500/40 transition-colors">
+          <Link 
+            href="/fees"
+            className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-amber-500/40 hover:bg-slate-900/90 transition-all block cursor-pointer"
+          >
             <div className="flex items-center justify-between text-slate-400 mb-2">
               <span className="text-xs font-medium uppercase font-mono tracking-wider">Fee Collections</span>
-              <div className="p-2 rounded-xl bg-amber-950/60 text-amber-400 border border-amber-500/20">
+              <div className="p-2 rounded-xl bg-amber-950/60 text-amber-400 border border-amber-500/20 group-hover:scale-110 transition-transform">
                 <CreditCard className="w-4 h-4" />
               </div>
             </div>
@@ -223,25 +272,29 @@ export default function DashboardPage() {
               ₹{(kpis?.feeTotalCollected || 0).toLocaleString('en-IN')}
             </div>
             <div className="text-[11px] text-amber-400 font-mono flex items-center justify-between">
-              <span>{kpis?.overdueEmiCount || 0} overdue</span>
-              <span>{kpis?.upcomingEmiCount || 0} due this week</span>
+              <span>{kpis?.overdueEmiCount || 0} overdue &bull; ₹{(kpis?.overdueEmiAmount || 0).toLocaleString('en-IN')}</span>
+              <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-amber-400" />
             </div>
-          </div>
+          </Link>
         ) : (
-          <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-cyan-500/40 transition-colors">
+          <Link
+            href="/students"
+            className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-cyan-500/40 hover:bg-slate-900/90 transition-all block cursor-pointer"
+          >
             <div className="flex items-center justify-between text-slate-400 mb-2">
               <span className="text-xs font-medium uppercase font-mono tracking-wider">Academic Health</span>
-              <div className="p-2 rounded-xl bg-cyan-950/60 text-cyan-400 border border-cyan-500/20">
+              <div className="p-2 rounded-xl bg-cyan-950/60 text-cyan-400 border border-cyan-500/20 group-hover:scale-110 transition-transform">
                 <ShieldCheck className="w-4 h-4" />
               </div>
             </div>
             <div className="font-display text-3xl font-bold text-emerald-400 mb-1">
               Optimal
             </div>
-            <div className="text-[11px] text-slate-400 font-mono">
-              {kpis?.activeStudents ?? 0} enrolled students active
+            <div className="text-[11px] text-slate-400 font-mono flex items-center justify-between">
+              <span>{kpis?.activeStudents ?? 0} enrolled students active</span>
+              <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-cyan-400" />
             </div>
-          </div>
+          </Link>
         )}
       </div>
 

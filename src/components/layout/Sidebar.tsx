@@ -138,18 +138,33 @@ export default function Sidebar({ currentUser, onOpenCopilot, isMobileOpen, onCl
               </div>
             </div>
 
-            {/* Role Security Footprint */}
-            <div className="p-3 border-t border-slate-800/80 bg-slate-950/60">
-              <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
-                <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase text-slate-400">
-                  <Lock className="w-3 h-3 text-cyan-400" />
-                  RBAC Enforcement
-                </span>
-                <span className="text-[10px] font-mono text-emerald-400">ACTIVE</span>
+            {/* User Profile & Role Security Footprint */}
+            <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 space-y-2">
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-900/80 border border-slate-800">
+                <img
+                  src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'}
+                  alt={currentUser.name || 'Owner'}
+                  className="w-8 h-8 rounded-lg object-cover border border-slate-700 flex-shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-semibold text-white truncate">
+                    {currentUser.name || (currentUser.role === 'owner' ? 'Priya Sharma' : 'Staff Member')}
+                  </div>
+                  <div className="text-[10px] text-cyan-400 font-mono capitalize truncate">
+                    {roleConfig.displayName}
+                  </div>
+                </div>
               </div>
-              <div className="p-2 rounded-lg bg-slate-900/90 border border-slate-800 text-[11px]">
-                <div className="font-semibold text-slate-200">{roleConfig.displayName}</div>
-                <div className="text-[10px] text-slate-400 truncate mt-0.5" title={roleConfig.description}>
+
+              <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px]">
+                <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                  <span className="flex items-center gap-1 font-mono uppercase text-slate-400">
+                    <Lock className="w-2.5 h-2.5 text-cyan-400" />
+                    RBAC Guard
+                  </span>
+                  <span className="text-[9px] font-mono text-emerald-400">ACTIVE</span>
+                </div>
+                <div className="text-[10px] text-slate-400 truncate" title={roleConfig.description}>
                   {roleConfig.description}
                 </div>
               </div>
@@ -211,17 +226,32 @@ export default function Sidebar({ currentUser, onOpenCopilot, isMobileOpen, onCl
       </div>
 
       {/* Role Security Footprint */}
-      <div className="p-3 border-t border-slate-800/80 bg-slate-950/40">
-        <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
-          <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase text-slate-400">
-            <Lock className="w-3 h-3 text-cyan-400" />
-            RBAC Enforcement
-          </span>
-          <span className="text-[10px] font-mono text-emerald-400">ACTIVE</span>
+      <div className="p-3 border-t border-slate-800/80 bg-slate-950/40 space-y-2">
+        <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-900/80 border border-slate-800">
+          <img
+            src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'}
+            alt={currentUser.name || 'Owner'}
+            className="w-8 h-8 rounded-lg object-cover border border-slate-700 flex-shrink-0"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-semibold text-white truncate">
+              {currentUser.name || (currentUser.role === 'owner' ? 'Priya Sharma' : 'Staff Member')}
+            </div>
+            <div className="text-[10px] text-cyan-400 font-mono capitalize truncate">
+              {roleConfig.displayName}
+            </div>
+          </div>
         </div>
-        <div className="p-2 rounded-lg bg-slate-900/90 border border-slate-800 text-[11px]">
-          <div className="font-semibold text-slate-200">{roleConfig.displayName}</div>
-          <div className="text-[10px] text-slate-400 truncate mt-0.5" title={roleConfig.description}>
+
+        <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px]">
+          <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+            <span className="flex items-center gap-1 font-mono uppercase text-slate-400">
+              <Lock className="w-2.5 h-2.5 text-cyan-400" />
+              RBAC Guard
+            </span>
+            <span className="text-[9px] font-mono text-emerald-400">ACTIVE</span>
+          </div>
+          <div className="text-[10px] text-slate-400 truncate" title={roleConfig.description}>
             {roleConfig.description}
           </div>
         </div>

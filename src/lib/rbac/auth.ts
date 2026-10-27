@@ -3,6 +3,7 @@ import { UserRole } from './permissions';
 import { AuthUser, DEMO_USERS } from './user-types';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
+export type { UserRole };
 export * from './user-types';
 
 const SESSION_COOKIE_NAME = 'instipilot_session';
@@ -20,7 +21,15 @@ export async function getSessionUser(): Promise<AuthUser> {
       const decoded = sessionCookie.includes('%') ? decodeURIComponent(sessionCookie) : sessionCookie;
       const parsed = JSON.parse(decoded) as AuthUser;
       if (parsed && parsed.role && DEMO_USERS[parsed.role]) {
-        return parsed;
+        const demo = DEMO_USERS[parsed.role];
+        return {
+          id: parsed.id || `u_${parsed.role}`,
+          name: parsed.name && parsed.name.trim().length > 0 ? parsed.name : demo.name,
+          email: parsed.email || demo.email,
+          role: parsed.role,
+          studentId: parsed.studentId || demo.studentId,
+          avatarUrl: parsed.avatarUrl || demo.avatar
+        };
       }
     } catch {
       // invalid cookie json

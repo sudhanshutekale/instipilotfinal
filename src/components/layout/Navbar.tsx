@@ -185,9 +185,9 @@ export default function Navbar({
                 />
                 <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-command-darkest"></span>
               </div>
-              <div className="hidden lg:flex flex-col text-left">
+              <div className="hidden sm:flex flex-col text-left">
                 <span className="text-xs font-semibold text-slate-200 leading-tight">
-                  {currentUser.name}
+                  {currentUser.name || (currentUser.role === 'owner' ? 'Priya Sharma' : 'User')}
                 </span>
                 <span className="text-[11px] text-cyan-400 font-mono capitalize">
                   {roleConfig.displayName}

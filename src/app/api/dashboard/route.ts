@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/rbac/auth';
+import { getSessionUser, DEMO_USERS } from '@/lib/rbac/auth';
+import { UserRole } from '@/lib/rbac/permissions';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -75,8 +76,18 @@ export async function GET() {
       }
     ];
 
+    const userRole = (user.role || 'owner') as UserRole;
+    const demo = DEMO_USERS[userRole] || DEMO_USERS.owner;
+    const userName = (user.name && user.name.trim().length > 0) ? user.name : demo.name;
+
     return NextResponse.json({
-      user: { name: user.name, role: user.role, email: user.email },
+      user: {
+        id: user.id || `u_${userRole}`,
+        name: userName,
+        role: userRole,
+        email: user.email || demo.email,
+        avatarUrl: user.avatarUrl || demo.avatar
+      },
       kpis: {
         activeStudents: studentCount,
         activeBatches: batchCount,
