@@ -17,7 +17,8 @@ export async function getSessionUser(): Promise<AuthUser> {
 
   if (sessionCookie) {
     try {
-      const parsed = JSON.parse(sessionCookie) as AuthUser;
+      const decoded = sessionCookie.includes('%') ? decodeURIComponent(sessionCookie) : sessionCookie;
+      const parsed = JSON.parse(decoded) as AuthUser;
       if (parsed && parsed.role && DEMO_USERS[parsed.role]) {
         return parsed;
       }

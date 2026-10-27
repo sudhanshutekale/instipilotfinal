@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
           rooms ( id, name, capacity )
         )
       `)
-      .eq('is_active', 1);
+      .eq('is_active', true);
 
     if (trainerId) {
       slotsQuery = slotsQuery.eq('trainer_id', trainerId);
@@ -176,7 +176,7 @@ async function handleMarkUnavailable(body: any, user: any) {
   const { data: allSlotsData } = await client
     .from('timetable_slots')
     .select('id, batch_id, trainer_id, room_id, day_of_week, start_time, end_time')
-    .eq('is_active', 1);
+    .eq('is_active', true);
 
   const existingSlots: Slot[] = (allSlotsData || []).map((s: any) => ({
     id: s.id,

@@ -21,7 +21,8 @@ export function middleware(request: NextRequest) {
 
   if (sessionCookie) {
     try {
-      const parsed = JSON.parse(sessionCookie);
+      const decoded = sessionCookie.includes('%') ? decodeURIComponent(sessionCookie) : sessionCookie;
+      const parsed = JSON.parse(decoded);
       if (parsed && parsed.role) {
         userRole = parsed.role;
       }
