@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const user = await getSessionUser();
-    const studentId = user.studentId || 's_001';
+    const queryStudentId = req.nextUrl.searchParams.get('studentId');
+    const studentId = user.role === 'student' ? (user.studentId || 's_001') : (queryStudentId || user.studentId || 's_001');
 
     if (!isSupabaseConfigured()) {
       return NextResponse.json({ error: 'Database not configured.' }, { status: 500 });

@@ -177,8 +177,9 @@ export default function StudentPortalPage() {
     );
   }
 
-  const { student, enrollment, attendance, fees, schedule, recordings, assignments } = data;
-  const isAttendanceGood = attendance.rate >= 80;
+  const { student, enrollment, attendance, financials, schedule, recordings, assignments } = data;
+  const fees = financials;
+  const isAttendanceGood = (attendance?.rate ?? 100) >= 80;
   const pendingInstallment = fees?.installments?.find((i: any) => i.status === 'pending' || i.status === 'overdue');
 
   return (
@@ -238,7 +239,7 @@ export default function StudentPortalPage() {
         {[
           { key: 'overview', label: 'Dashboard Overview', icon: BookOpen },
           { key: 'schedule', label: 'My Class Schedule', icon: CalendarClock },
-          { key: 'attendance', label: `Attendance Log (${attendance.rate}%)`, icon: UserCheck },
+          { key: 'attendance', label: `Attendance Log (${attendance?.rate ?? 0}%)`, icon: UserCheck },
           { key: 'fees', label: 'Fees & Payment EMI', icon: CreditCard },
           { key: 'recordings', label: `Recordings (${recordings?.length || 0})`, icon: Video },
           { key: 'assignments', label: `Assignments (${assignments?.length || 0})`, icon: FileCode2 },
@@ -278,13 +279,13 @@ export default function StudentPortalPage() {
                 </span>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="font-display text-3xl font-bold text-white">{attendance.rate}%</span>
-                <span className="text-xs text-slate-400 font-mono">({attendance.summary.present}/{attendance.summary.total} classes)</span>
+                <span className="font-display text-3xl font-bold text-white">{attendance?.rate ?? 0}%</span>
+                <span className="text-xs text-slate-400 font-mono">({attendance?.present ?? 0}/{attendance?.totalSessions ?? 0} classes)</span>
               </div>
               <div className="w-full h-1.5 rounded-full bg-slate-800 mt-3 overflow-hidden">
                 <div 
                   className={`h-full rounded-full ${isAttendanceGood ? 'bg-emerald-400 shadow-neon-cyan' : 'bg-rose-400'}`}
-                  style={{ width: `${attendance.rate}%` }}
+                  style={{ width: `${attendance?.rate ?? 0}%` }}
                 />
               </div>
             </div>
@@ -341,7 +342,7 @@ export default function StudentPortalPage() {
               </div>
               <div>
                 <div className="font-display text-3xl font-bold text-white">
-                  {assignments.filter((a: any) => a.submission_id).length} / {assignments.length}
+                  {(assignments || []).filter((a: any) => a.submission_id).length} / {(assignments || []).length}
                 </div>
                 <div className="text-xs text-slate-400 font-mono mt-0.5">Submissions Evaluated</div>
               </div>
@@ -489,10 +490,10 @@ export default function StudentPortalPage() {
             </div>
             <div className="flex items-center gap-3 text-xs font-mono">
               <span className="px-3 py-1 rounded-xl bg-emerald-950 border border-emerald-800 text-emerald-300">
-                Present: {attendance.summary.present}
+                Present: {attendance?.present ?? 0}
               </span>
               <span className="px-3 py-1 rounded-xl bg-rose-950 border border-rose-800 text-rose-300">
-                Absent: {attendance.summary.absent}
+                Absent: {attendance?.absent ?? 0}
               </span>
             </div>
           </div>
@@ -509,7 +510,7 @@ export default function StudentPortalPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-mono">
-                {attendance.logs?.map((log: any) => (
+                {(attendance?.recentLogs || attendance?.logs || []).map((log: any) => (
                   <tr key={log.id} className="hover:bg-slate-800/30">
                     <td className="py-3 px-4 font-semibold text-slate-200">{log.date}</td>
                     <td className="py-3 px-4 text-slate-300 uppercase text-[11px]">{log.mode}</td>
@@ -565,8 +566,8 @@ export default function StudentPortalPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-mono">
-                  {fees?.installments?.map((inst: any) => {
-                    const proof = fees?.proofs?.find((p: any) => p.emi_id === inst.id);
+                  {(fees?.installments || []).map((inst: any) => {
+                    const proof = (fees?.proofs || []).find((p: any) => p.emi_id === inst.id);
                     const isPaid = inst.status === 'paid' || proof?.status === 'verified';
                     const isPendingProof = proof?.status === 'pending';
                     const isRejectedProof = proof?.status === 'rejected';

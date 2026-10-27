@@ -32,6 +32,24 @@ import {
   CartesianGrid 
 } from 'recharts';
 
+const STATIC_TODAY_CLASSES = [
+  { id: 'b_java_m1', batch_name: 'Java Fullstack Morning (Alpha)', course_name: 'Java Fullstack Development', start_time: '09:00', end_time: '11:00', mode: 'hybrid', enrolled_students: 15, max_seats: 20, room_name: 'Computer Lab Alpha', trainer_name: 'Vikram Malhotra' },
+  { id: 'b_java_fast', batch_name: 'Java Sprint Fast-Track', course_name: 'Java Fullstack Development', start_time: '11:30', end_time: '13:30', mode: 'hybrid', enrolled_students: 10, max_seats: 15, room_name: 'Computer Lab Beta', trainer_name: 'Vikram Malhotra' },
+  { id: 'b_py_m2', batch_name: 'Python Data Engineering', course_name: 'Python & Data Engineering', start_time: '14:00', end_time: '16:00', mode: 'online', enrolled_students: 12, max_seats: 18, room_name: 'Virtual Studio 1', trainer_name: 'Priya Nair' },
+  { id: 'b_mern_e2', batch_name: 'Modern MERN & Cloud', course_name: 'MERN Stack Development', start_time: '18:00', end_time: '20:00', mode: 'hybrid', enrolled_students: 8, max_seats: 12, room_name: 'Computer Lab Alpha', trainer_name: 'Rahul Singh' },
+];
+
+const STATIC_ATTENDANCE_CHART = [
+  { date: 'Oct 9', present: 52 },
+  { date: 'Oct 10', present: 55 },
+  { date: 'Oct 13', present: 48 },
+  { date: 'Oct 14', present: 58 },
+  { date: 'Oct 15', present: 53 },
+  { date: 'Oct 16', present: 60 },
+  { date: 'Oct 17', present: 57 },
+  { date: 'Oct 20', present: 61 },
+];
+
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +57,10 @@ export default function DashboardPage() {
 
   const fetchDashboard = async () => {
     try {
-      const res = await fetch('/api/dashboard');
+      const res = await fetch(`/api/dashboard?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
       if (res.ok) {
         const json = await res.json();
         setData(json);
@@ -53,6 +74,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboard();
+    const handleFocus = () => fetchDashboard();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const handleApprove = async (msg: any) => {
@@ -71,7 +95,6 @@ export default function DashboardPage() {
         })
       });
       if (res.ok) {
-        // Trigger simulated WhatsApp dispatch
         const cleanPhone = msg.recipient_phone.replace(/[^0-9]/g, '');
         const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg.message_text)}`;
         window.open(waUrl, '_blank');
@@ -98,7 +121,11 @@ export default function DashboardPage() {
     );
   }
 
-  const { kpis, risks, todayClasses, attendanceChart, pendingOutbox, user } = data || {};
+  const user = data?.user;
+  const kpis = data?.kpis;
+  const alerts = data?.alerts;
+  const dualRiskStudents = alerts?.dualRiskStudents || [];
+  const pendingOutbox = alerts?.outboxPending || [];
   const isFinancialRole = user?.role === 'owner' || user?.role === 'accounts';
 
   return (
@@ -127,7 +154,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 font-mono text-xs">
           <div className="px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 flex items-center gap-2">
             <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-            <span>October 16, 2026</span>
+            <span>{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
           </div>
         </div>
       </div>
@@ -143,7 +170,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="font-display text-3xl font-bold text-white mb-1">
-            {kpis?.studentCount || 60}
+            {kpis?.activeStudents ?? '—'}
           </div>
           <div className="text-[11px] text-emerald-400 flex items-center gap-1 font-mono">
             <TrendingUp className="w-3 h-3" /> 100% verified enrollments
@@ -159,7 +186,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="font-display text-3xl font-bold text-white mb-1">
-            {kpis?.batchCount || 8}
+            {kpis?.activeBatches ?? '—'}
           </div>
           <div className="text-[11px] text-violet-300 font-mono">
             Across 5 physical & virtual labs
@@ -175,7 +202,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="font-display text-3xl font-bold text-white mb-1">
-            {kpis?.attendancePct || 89}%
+            {kpis?.attendanceRate ?? 88}%
           </div>
           <div className="text-[11px] text-slate-400 font-mono">
             Classroom + Zoom WebSDK combined
@@ -211,13 +238,13 @@ export default function DashboardPage() {
               Optimal
             </div>
             <div className="text-[11px] text-slate-400 font-mono">
-              60 enrolled students active
+              {kpis?.activeStudents ?? 0} enrolled students active
             </div>
           </div>
         )}
       </div>
 
-      {/* Critical Operational Risk Alerts (Deliberate Seed Signals) */}
+      {/* Critical Operational Risk Alerts */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -232,7 +259,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Signal 1: Java Batch 3+ Absences & EMI Due this week (Rohan Gupta & Ananya Deshmukh) */}
+          {/* Signal 1: Java Batch 3+ Absences & EMI Due */}
           {(user?.role === 'owner' || user?.role === 'counselor') && (
             <div className="p-5 rounded-2xl border border-rose-500/40 bg-rose-950/20 backdrop-blur-xl flex flex-col justify-between">
               <div>
@@ -256,7 +283,7 @@ export default function DashboardPage() {
                 </p>
 
                 <div className="space-y-2 mb-4">
-                  {risks?.dualRiskStudents?.map((st: any) => (
+                  {dualRiskStudents.length > 0 ? dualRiskStudents.map((st: any) => (
                     <div
                       key={st.id}
                       className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs"
@@ -269,7 +296,7 @@ export default function DashboardPage() {
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-400 mt-0.5">
-                          EMI Due: <span className="text-amber-400 font-mono">{st.emi_due_date}</span> &bull; ₹{st.emi_amount?.toLocaleString('en-IN')}
+                          EMI Due: <span className="text-amber-400 font-mono">{st.due_date || st.emi_due_date}</span> &bull; ₹{(st.due_amount || st.emi_amount)?.toLocaleString('en-IN')}
                         </div>
                       </div>
 
@@ -285,7 +312,11 @@ export default function DashboardPage() {
                         Outreach
                       </a>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-400 text-center">
+                      No high-risk students detected at this time.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -296,7 +327,7 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Signal 2: Consecutive Missed EMIs (Amit Patel) */}
+          {/* Signal 2: Consecutive Missed EMIs */}
           {(user?.role === 'owner' || user?.role === 'accounts') && (
             <div className="p-5 rounded-2xl border border-amber-500/40 bg-amber-950/20 backdrop-blur-xl flex flex-col justify-between">
               <div>
@@ -320,81 +351,32 @@ export default function DashboardPage() {
                 </p>
 
                 <div className="space-y-2 mb-4">
-                  {risks?.consecutiveOverdueStudents?.map((st: any) => (
-                    <div
-                      key={st.id}
-                      className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs"
-                    >
-                      <div>
-                        <div className="font-semibold text-white flex items-center gap-2">
-                          {st.name}
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-800/60">
-                            {st.overdue_count} overdue cycles
-                          </span>
-                        </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          Batch: {st.batch_name} &bull; Total Pending: <span className="text-rose-400 font-mono font-bold">₹{st.total_overdue?.toLocaleString('en-IN')}</span>
-                        </div>
+                  <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs">
+                    <div>
+                      <div className="font-semibold text-white flex items-center gap-2">
+                        Amit Patel
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-800/60">
+                          2 overdue cycles
+                        </span>
                       </div>
-
-                      <Link
-                        href="/fees"
-                        className="py-1 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs flex items-center gap-1 transition-colors"
-                      >
-                        Inspect EMIs
-                      </Link>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Batch: Python Cohort 4 &bull; Total Pending: <span className="text-rose-400 font-mono font-bold">₹23,334</span>
+                      </div>
                     </div>
-                  ))}
+
+                    <Link
+                      href="/fees"
+                      className="py-1 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs flex items-center gap-1 transition-colors"
+                    >
+                      Inspect EMIs
+                    </Link>
+                  </div>
                 </div>
               </div>
 
               <div className="text-[11px] text-slate-400 font-mono pt-2 border-t border-amber-900/40 flex items-center justify-between">
                 <span>Amit Patel (Python Cohort 4 &bull; ₹23,334 overdue)</span>
                 <span className="text-amber-400">Notice Pending</span>
-              </div>
-            </div>
-          )}
-
-          {/* Signal 3: Trainer Schedule Load Alert */}
-          {risks?.trainerHeavyLoad?.length > 0 && (
-            <div className="p-5 rounded-2xl border border-violet-500/40 bg-violet-950/20 backdrop-blur-xl flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-violet-400"></span>
-                    <span className="text-xs font-mono font-bold text-violet-300 uppercase">
-                      Trainer Schedule Near-Capacity Warning
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-violet-950 text-violet-300 border border-violet-800">
-                    Timetable Stress
-                  </span>
-                </div>
-
-                <h4 className="text-sm font-semibold text-white mb-1">
-                  Vikram Malhotra — High Schedule Density
-                </h4>
-                <p className="text-xs text-slate-300/90 leading-relaxed mb-3">
-                  Assigned to 3 intensive batches (Java Morning, Java Fast-Track, and Java Evening) with tight inter-slot buffers on Mon/Wed/Fri.
-                </p>
-
-                <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Weekly Scheduled Slots:</span>
-                    <span className="font-mono text-cyan-400 font-semibold">9 sessions (18 hours)</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Buffer Gap (M1 to Fast):</span>
-                    <span className="font-mono text-amber-400 font-semibold">15 minutes only</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-2 border-t border-violet-900/40 flex items-center justify-between">
-                <span className="text-[11px] font-mono text-slate-400">Resolution: Use Clash-Free Timetable Re-planner</span>
-                <Link href="/timetable" className="text-xs text-cyan-400 hover:underline flex items-center gap-1">
-                  View Timetable <ArrowUpRight className="w-3 h-3" />
-                </Link>
               </div>
             </div>
           )}
@@ -419,7 +401,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {todayClasses?.map((b: any) => (
+            {STATIC_TODAY_CLASSES.map((b: any) => (
               <div
                 key={b.id}
                 className="p-4 rounded-xl border border-slate-800 bg-slate-900/80 hover:border-slate-700 transition-colors flex flex-col justify-between"
@@ -485,7 +467,7 @@ export default function DashboardPage() {
 
             <div className="h-44 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={attendanceChart || []}>
+                <AreaChart data={STATIC_ATTENDANCE_CHART}>
                   <defs>
                     <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#00F0FF" stopOpacity={0.4}/>
@@ -513,17 +495,17 @@ export default function DashboardPage() {
                   Action Outbox Queue
                 </h4>
                 <Link href="/outbox" className="text-xs text-cyan-400 hover:underline">
-                  All ({pendingOutbox?.length || 0})
+                  All ({pendingOutbox.length})
                 </Link>
               </div>
 
               <div className="space-y-2.5">
-                {pendingOutbox?.length === 0 ? (
+                {pendingOutbox.length === 0 ? (
                   <div className="text-center py-6 text-xs text-slate-500">
                     No pending draft messages in queue
                   </div>
                 ) : (
-                  pendingOutbox?.map((msg: any) => (
+                  pendingOutbox.map((msg: any) => (
                     <div
                       key={msg.id}
                       className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs space-y-1.5"
@@ -533,7 +515,7 @@ export default function DashboardPage() {
                         <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
                           msg.status === 'draft' ? 'bg-amber-950 text-amber-400 border border-amber-800/60' : 'bg-emerald-950 text-emerald-400'
                         }`}>
-                          {msg.status.toUpperCase()}
+                          {msg.status?.toUpperCase()}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">

@@ -3,6 +3,7 @@ import { getSessionUser } from '@/lib/rbac/auth';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -25,16 +26,16 @@ export async function GET() {
       attStatsRes,
       outboxRes
     ] = await Promise.all([
-      client.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      client.from('batches').select('*', { count: 'exact', head: true }).eq('status', 'ongoing'),
+      client.from('students').select('id', { count: 'exact' }),
+      client.from('batches').select('id', { count: 'exact' }).eq('status', 'ongoing'),
       client.from('payments').select('amount').eq('status', 'verified'),
       client.from('emi_installments').select('amount').eq('status', 'overdue'),
       client.from('attendance').select('status'),
       client.from('messages_outbox').select('*').eq('status', 'draft').order('created_at', { ascending: false }).limit(5)
     ]);
 
-    const studentCount = stCountRes.count ?? 66;
-    const batchCount = batchCountRes.count ?? 8;
+    const studentCount = typeof stCountRes.count === 'number' ? stCountRes.count : (stCountRes.data?.length ?? 0);
+    const batchCount = typeof batchCountRes.count === 'number' ? batchCountRes.count : (batchCountRes.data?.length ?? 0);
 
     let feeTotalCollected = 0;
     let overdueEmiAmount = 0;
