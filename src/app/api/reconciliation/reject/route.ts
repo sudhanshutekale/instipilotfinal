@@ -45,22 +45,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (!proof) {
-      const db = getDb();
-      proof = db.prepare(`
-        SELECT p.*, s.name as student_name
-        FROM payment_proofs p
-        JOIN students s ON s.id = p.student_id
-        WHERE p.id = ?
-      `).get(proofId) as any;
-    }
-
-    if (!proof) {
       return NextResponse.json({ error: 'Payment proof not found' }, { status: 404 });
     }
 
     const nowIso = new Date().toISOString();
 
-    // 1. Persist to Supabase Cloud
+    // Persist to Supabase Cloud
     if (isSupabaseConfigured()) {
       await upsertToSupabase('payment_proofs', {
         id: proofId,
@@ -79,31 +69,6 @@ export async function POST(req: NextRequest) {
         result_summary: `Owner rejected photo proof for ${proof.student_name}: "${rejectionReason}" (UTR: ${proof.reference})`,
         status: 'success'
       });
-    }
-
-    // 2. Also persist to SQLite if available
-    try {
-      const db = getDb();
-      db.prepare(`
-        UPDATE payment_proofs
-        SET status = 'rejected',
-            rejection_reason = ?,
-            verified_by = ?,
-            verified_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(rejectionReason, user.id, proofId);
-
-      db.prepare(`
-        INSERT INTO audit_log (id, user_id, user_name, role, action, result_summary, status)
-        VALUES (?, ?, ?, 'owner', 'OWNER_REJECTED_PAYMENT_PROOF', ?, 'success')
-      `).run(
-        `aud_${Date.now()}`,
-        user.id,
-        user.name,
-        `Owner rejected photo proof for ${proof.student_name}: "${rejectionReason}" (UTR: ${proof.reference})`
-      );
-    } catch (e) {
-      // Ignore SQLite write error in serverless
     }
 
     return NextResponse.json({

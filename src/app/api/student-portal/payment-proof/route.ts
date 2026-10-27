@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/rbac/auth';
-import { getSupabase, isSupabaseConfigured, upsertToSupabase } from '@/lib/supabase';
+import { isSupabaseConfigured, upsertToSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     const proofId = `proof_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-    // 1. Persist to Supabase Cloud
+    // Persist to Supabase Cloud
     if (isSupabaseConfigured()) {
       await upsertToSupabase('payment_proofs', {
         id: proofId,
@@ -59,42 +59,6 @@ export async function POST(req: NextRequest) {
         result_summary: `Student uploaded payment photo proof for Installment ${emiId} (₹${Number(amount)?.toLocaleString('en-IN')}, UTR: ${reference})`,
         status: 'success'
       });
-    }
-
-    // 2. Also persist to SQLite if available
-    try {
-      const db = getDb();
-      const existingPending = db.prepare(`
-        SELECT id FROM payment_proofs
-        WHERE emi_id = ? AND status = 'pending'
-      `).get(emiId) as any;
-
-      if (existingPending) {
-        db.prepare(`
-          UPDATE payment_proofs
-          SET amount = ?, reference = ?, proof_image_url = ?, payment_mode = ?, notes = ?, created_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `).run(amount, reference, proofImageUrl, paymentMode || 'upi', notes || '', existingPending.id);
-      } else {
-        db.prepare(`
-          INSERT INTO payment_proofs (
-            id, student_id, emi_id, amount, reference, proof_image_url, payment_mode, notes, status
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-        `).run(proofId, studentId, emiId, amount, reference, proofImageUrl, paymentMode || 'upi', notes || '');
-      }
-
-      db.prepare(`
-        INSERT INTO audit_log (id, user_id, user_name, role, action, result_summary, status)
-        VALUES (?, ?, ?, ?, 'STUDENT_UPLOAD_PAYMENT_PROOF', ?, 'success')
-      `).run(
-        `aud_${Date.now()}`,
-        user.id,
-        user.name,
-        user.role,
-        `Student uploaded payment photo proof for Installment ${emiId} (₹${amount.toLocaleString('en-IN')}, UTR: ${reference})`
-      );
-    } catch (e) {
-      // Ignore SQLite write error in serverless
     }
 
     return NextResponse.json({

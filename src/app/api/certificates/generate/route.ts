@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/rbac/auth';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    await getSessionUser();
+
     const searchParams = req.nextUrl.searchParams;
     const studentId = searchParams.get('studentId');
 
@@ -13,23 +16,42 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'studentId required' }, { status: 400 });
     }
 
-    const db = getDb();
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Database not configured.' }, { status: 500 });
+    }
 
-    const student = db.prepare(`
-      SELECT s.*, b.name as batch_name, c.name as course_name, c.code as course_code,
-             t.name as trainer_name
-      FROM students s
-      JOIN enrollments en ON en.student_id = s.id
-      JOIN batches b ON b.id = en.batch_id
-      JOIN courses c ON c.id = b.course_id
-      JOIN trainers t ON t.id = b.trainer_id
-      WHERE s.id = ?
-      LIMIT 1
-    `).get(studentId) as any;
+    const client = getSupabase();
+    if (!client) {
+      return NextResponse.json({ error: 'Database client unavailable.' }, { status: 500 });
+    }
 
-    if (!student) {
+    // Fetch student with enrollment, batch, course, trainer
+    const { data: enrollmentData, error: enrollErr } = await client
+      .from('enrollments')
+      .select(`
+        students ( id, name, email, join_date ),
+        batches (
+          name,
+          courses ( name, code ),
+          trainers ( name )
+        )
+      `)
+      .eq('student_id', studentId)
+      .limit(1)
+      .single();
+
+    if (enrollErr || !enrollmentData) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
+
+    const student = {
+      id: studentId,
+      name: (enrollmentData.students as any)?.name || 'Unknown Student',
+      batch_name: (enrollmentData.batches as any)?.name || 'Unknown Batch',
+      course_name: (enrollmentData.batches as any)?.courses?.name || 'Unknown Course',
+      course_code: (enrollmentData.batches as any)?.courses?.code || 'N/A',
+      trainer_name: (enrollmentData.batches as any)?.trainers?.name || 'Unknown Trainer',
+    };
 
     const verificationId = `INSTP-${Date.now().toString(36).toUpperCase()}-${studentId.slice(-4).toUpperCase()}`;
     const issueDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -41,7 +63,7 @@ export async function GET(req: NextRequest) {
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    // Background gradient simulation (dark navy)
+    // Background
     page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(0.04, 0.06, 0.11) });
 
     // Border accent lines
@@ -65,10 +87,8 @@ export async function GET(req: NextRequest) {
       color: rgb(0.6, 0.7, 0.9),
     });
 
-    // Decorative line
     page.drawLine({ start: { x: 80, y: height - 160 }, end: { x: width - 80, y: height - 160 }, thickness: 1, color: rgb(0.53, 0.36, 0.97) });
 
-    // Presented to
     page.drawText('This is to certify that', {
       x: 300,
       y: height - 200,
@@ -77,7 +97,6 @@ export async function GET(req: NextRequest) {
       color: rgb(0.6, 0.7, 0.8),
     });
 
-    // Student Name
     page.drawText(student.name, {
       x: (width - student.name.length * 16) / 2,
       y: height - 245,
@@ -94,7 +113,6 @@ export async function GET(req: NextRequest) {
       color: rgb(0.6, 0.7, 0.8),
     });
 
-    // Course Name
     page.drawText(student.course_name, {
       x: (width - student.course_name.length * 10) / 2,
       y: height - 320,
@@ -119,10 +137,8 @@ export async function GET(req: NextRequest) {
       color: rgb(0.5, 0.6, 0.7),
     });
 
-    // Decorative line
     page.drawLine({ start: { x: 80, y: height - 395 }, end: { x: width - 80, y: height - 395 }, thickness: 0.5, color: rgb(0.3, 0.35, 0.45) });
 
-    // Signatures section
     page.drawText('Director, InstiPilot Academy', {
       x: 120,
       y: height - 450,
@@ -141,7 +157,6 @@ export async function GET(req: NextRequest) {
     });
     page.drawLine({ start: { x: 520, y: height - 435 }, end: { x: 730, y: height - 435 }, thickness: 0.5, color: rgb(0.3, 0.4, 0.5) });
 
-    // Footer
     page.drawText(`Issue Date: ${issueDate}`, { x: 120, y: 65, size: 10, font: helvetica, color: rgb(0.4, 0.5, 0.6) });
     page.drawText(`Verification ID: ${verificationId}`, { x: 500, y: 65, size: 9, font: helvetica, color: rgb(0.4, 0.5, 0.6) });
     page.drawText('Verify at: verify.instipilot.com', { x: 310, y: 50, size: 9, font: helvetica, color: rgb(0, 0.6, 0.8) });

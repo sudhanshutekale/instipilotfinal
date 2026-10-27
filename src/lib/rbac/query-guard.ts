@@ -1,5 +1,5 @@
-import { UserRole, isTableAllowed, isColumnForbidden } from './permissions';
-import { getReadOnlyDb, getDb } from '@/lib/db';
+import { UserRole, isTableAllowed } from './permissions';
+import { getSupabase, isSupabaseConfigured, upsertToSupabase } from '@/lib/supabase';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -28,14 +28,7 @@ const FORBIDDEN_SQL_KEYWORDS = [
 ];
 
 /**
- * Validates whether an SQL query adheres strictly to the security sandbox:
- * 1. Single SELECT statement only.
- * 2. No multi-statements (no semicolons separating statements).
- * 3. No SQL comments (blocks prompt injection hiding payload in comments).
- * 4. No mutation / DDL / pragma keywords.
- * 5. All referenced tables MUST be explicitly permitted for the user's role.
- * 6. All referenced columns must pass role column safety tests.
- * 7. Adds a sensible safety LIMIT (default 50) if missing.
+ * Validates whether a SQL/query adheres strictly to the security sandbox
  */
 export function validateSqlQuery(sql: string, role: UserRole): ValidationResult {
   const violations: string[] = [];
@@ -46,12 +39,10 @@ export function validateSqlQuery(sql: string, role: UserRole): ValidationResult 
 
   let cleaned = sql.trim();
 
-  // Strip trailing semicolon if single statement
   if (cleaned.endsWith(';')) {
     cleaned = cleaned.slice(0, -1).trim();
   }
 
-  // 1. Check for multiple statements
   if (cleaned.includes(';')) {
     return {
       isValid: false,
@@ -60,7 +51,6 @@ export function validateSqlQuery(sql: string, role: UserRole): ValidationResult 
     };
   }
 
-  // 2. Reject comments (-- or /* */) which are typical injection vectors
   if (/(--|\/\*|\*\/)/.test(cleaned)) {
     return {
       isValid: false,
@@ -69,7 +59,6 @@ export function validateSqlQuery(sql: string, role: UserRole): ValidationResult 
     };
   }
 
-  // 3. Must begin with SELECT or WITH (for CTEs leading to SELECT)
   const normalized = cleaned.replace(/\s+/g, ' ');
   if (!/^(\s*SELECT|\s*WITH)/i.test(normalized)) {
     return {
@@ -79,13 +68,10 @@ export function validateSqlQuery(sql: string, role: UserRole): ValidationResult 
     };
   }
 
-  // 4. Reject forbidden mutation / DDL keywords
   const uppercaseQuery = normalized.toUpperCase();
   for (const keyword of FORBIDDEN_SQL_KEYWORDS) {
-    // Regex matching keyword as standalone word
     const keywordRegex = new RegExp(`\\b${keyword}\\b`, 'i');
     if (keywordRegex.test(uppercaseQuery)) {
-      // Allow INTO only if not preceded by SELECT ... INTO, but SQLite doesn't use SELECT INTO anyway
       return {
         isValid: false,
         blockedReason: `Dangerous SQL keyword '${keyword}' is prohibited by InstiPilot safety policy.`,
@@ -94,8 +80,6 @@ export function validateSqlQuery(sql: string, role: UserRole): ValidationResult 
     }
   }
 
-  // 5. Extract and validate tables
-  // Matches tokens following FROM or JOIN
   const tableMatches = Array.from(uppercaseQuery.matchAll(/\b(?:FROM|JOIN)\s+([a-zA-Z0-9_]+)/gi));
   const foundTables = new Set<string>();
 
@@ -119,8 +103,6 @@ export function validateSqlQuery(sql: string, role: UserRole): ValidationResult 
     }
   }
 
-  // 6. Check for role-forbidden column patterns
-  // E.g., if Trainer attempts to read 'fee', 'payment', 'amount', 'emi'
   if (role === 'trainer') {
     const forbiddenFinancialTerms = ['amount', 'fee', 'total_fee', 'total_amount', 'down_payment', 'emi', 'payment', 'discount', 'paid_date'];
     for (const term of forbiddenFinancialTerms) {
@@ -153,7 +135,6 @@ export function validateSqlQuery(sql: string, role: UserRole): ValidationResult 
     }
   }
 
-  // 7. Ensure a LIMIT clause exists to protect against memory exhaustion
   let finalSql = cleaned;
   if (!/\bLIMIT\s+\d+/i.test(finalSql)) {
     finalSql = `${finalSql} LIMIT 50`;
@@ -167,8 +148,11 @@ export function validateSqlQuery(sql: string, role: UserRole): ValidationResult 
 }
 
 /**
- * Safely executes validated SQL inside a read-only SQLite database connection
- * with timeout and logs the audit trail.
+ * Executes a safe Supabase query using the rpc or direct table selects.
+ * Since Supabase doesn't run raw SQL by default, this function:
+ * 1. Validates the SQL (RBAC rules)
+ * 2. Attempts to run via Supabase RPC `exec_sql` if available
+ * 3. Logs the audit trail to Supabase
  */
 export async function executeSafeQuery(
   rawSql: string,
@@ -176,28 +160,27 @@ export async function executeSafeQuery(
   originalPrompt?: string
 ): Promise<QueryExecutionResult> {
   const startTime = Date.now();
-  const dbWritable = getDb();
 
   // 1. Validate
   const validation = validateSqlQuery(rawSql, user.role);
 
   if (!validation.isValid) {
     const duration = Date.now() - startTime;
-    // Log blocked event to audit_log
+
+    // Log blocked event
     try {
-      dbWritable.prepare(`
-        INSERT INTO audit_log (id, user_id, user_name, role, action, query, result_summary, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        `aud_blk_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-        user.id,
-        user.name,
-        user.role,
-        'copilot_blocked',
-        originalPrompt ? `${originalPrompt} [SQL: ${rawSql}]` : rawSql,
-        validation.blockedReason || 'Blocked by security validator',
-        'blocked'
-      );
+      if (isSupabaseConfigured()) {
+        await upsertToSupabase('audit_log', {
+          id: `aud_blk_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+          user_id: user.id,
+          user_name: user.name,
+          role: user.role,
+          action: 'copilot_blocked',
+          query: originalPrompt ? `${originalPrompt} [SQL: ${rawSql}]` : rawSql,
+          result_summary: validation.blockedReason || 'Blocked by security validator',
+          status: 'blocked'
+        });
+      }
     } catch (e) {
       console.error('Failed to log blocked audit event:', e);
     }
@@ -211,31 +194,63 @@ export async function executeSafeQuery(
     };
   }
 
-  // 2. Execute on read-only connection
+  // 2. Execute via Supabase RPC
   try {
-    const readOnlyDb = getReadOnlyDb();
-    const statement = readOnlyDb.prepare(validation.sanitizedSql!);
-    const rows = statement.all();
-    const duration = Date.now() - startTime;
-
-    // Log successful query to audit_log
-    try {
-      dbWritable.prepare(`
-        INSERT INTO audit_log (id, user_id, user_name, role, action, query, result_summary, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        `aud_ok_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-        user.id,
-        user.name,
-        user.role,
-        'copilot_query',
-        originalPrompt ? `${originalPrompt} [SQL: ${validation.sanitizedSql}]` : validation.sanitizedSql,
-        `Returned ${rows.length} rows in ${duration}ms`,
-        'success'
-      );
-    } catch (e) {
-      console.error('Failed to write audit log:', e);
+    if (!isSupabaseConfigured()) {
+      return {
+        success: false,
+        error: 'Supabase not configured. Cannot execute query.',
+        executionTimeMs: Date.now() - startTime
+      };
     }
+
+    const client = getSupabase();
+    if (!client) {
+      return {
+        success: false,
+        error: 'Supabase client unavailable.',
+        executionTimeMs: Date.now() - startTime
+      };
+    }
+
+    // Try running via RPC (requires `exec_sql` function in Supabase)
+    const { data, error } = await client.rpc('exec_sql', { query: validation.sanitizedSql });
+
+    const duration = Date.now() - startTime;
+    const rows = data || [];
+
+    if (error) {
+      // Log failure
+      await upsertToSupabase('audit_log', {
+        id: `aud_err_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        user_id: user.id,
+        user_name: user.name,
+        role: user.role,
+        action: 'copilot_query',
+        query: originalPrompt ? `${originalPrompt} [SQL: ${validation.sanitizedSql}]` : validation.sanitizedSql,
+        result_summary: `Error: ${error.message}`,
+        status: 'error'
+      }).catch(() => {});
+
+      return {
+        success: false,
+        error: `Query execution error: ${error.message}`,
+        executedSql: validation.sanitizedSql,
+        executionTimeMs: duration
+      };
+    }
+
+    // Log success
+    await upsertToSupabase('audit_log', {
+      id: `aud_ok_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      user_id: user.id,
+      user_name: user.name,
+      role: user.role,
+      action: 'copilot_query',
+      query: originalPrompt ? `${originalPrompt} [SQL: ${validation.sanitizedSql}]` : validation.sanitizedSql,
+      result_summary: `Returned ${rows.length} rows in ${duration}ms`,
+      status: 'success'
+    }).catch(() => {});
 
     return {
       success: true,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/rbac/auth';
+import { getSupabase, isSupabaseConfigured, upsertToSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,60 +48,90 @@ function hasRoomClash(slots: Slot[], roomId: string | null, day: string, start: 
 export async function GET(req: NextRequest) {
   try {
     const user = await getSessionUser();
-    const db = getDb();
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Database not configured.' }, { status: 500 });
+    }
+
+    const client = getSupabase();
+    if (!client) {
+      return NextResponse.json({ error: 'Database client unavailable.' }, { status: 500 });
+    }
+
     const searchParams = req.nextUrl.searchParams;
     const trainerId = searchParams.get('trainerId') || '';
     const roomId = searchParams.get('roomId') || '';
 
-    // If student, filter slots strictly to their enrolled batch
-    if (user.role === 'student') {
-      const studentId = user.studentId || 's_001';
-      const studentSlots = db.prepare(`
-        SELECT 
-          ts.id, ts.day_of_week, ts.start_time, ts.end_time, ts.is_active, ts.notes,
-          b.id as batch_id, b.name as batch_name, b.mode, b.max_seats, b.online_seat_limit,
-          c.id as course_id, c.name as course_name, c.code as course_code,
-          t.id as trainer_id, t.name as trainer_name, t.availability,
-          r.id as room_id, r.name as room_name, r.capacity as room_capacity
-        FROM timetable_slots ts
-        JOIN batches b ON b.id = ts.batch_id
-        JOIN enrollments en ON en.batch_id = b.id
-        JOIN courses c ON c.id = b.course_id
-        JOIN trainers t ON t.id = ts.trainer_id
-        LEFT JOIN rooms r ON r.id = ts.room_id
-        WHERE en.student_id = ? AND ts.is_active = 1
-        ORDER BY ts.start_time ASC
-      `).all(studentId);
+    const [trainersRes, roomsRes] = await Promise.all([
+      client.from('trainers').select('id, name'),
+      client.from('rooms').select('id, name, capacity').order('name')
+    ]);
 
-      const trainers = db.prepare('SELECT id, name FROM trainers').all();
-      const rooms = db.prepare('SELECT id, name, capacity FROM rooms ORDER BY name').all();
-      return NextResponse.json({ slots: studentSlots, trainers, rooms });
+    let slotsQuery = client
+      .from('timetable_slots')
+      .select(`
+        id, day_of_week, start_time, end_time, is_active, notes,
+        batches (
+          id, name, mode, max_seats, online_seat_limit, status,
+          courses ( id, name, code ),
+          trainers ( id, name, availability ),
+          rooms ( id, name, capacity )
+        )
+      `)
+      .eq('is_active', 1);
+
+    if (trainerId) {
+      slotsQuery = slotsQuery.eq('trainer_id', trainerId);
+    }
+    if (roomId) {
+      slotsQuery = slotsQuery.eq('room_id', roomId);
     }
 
-    let query = `
-      SELECT 
-        ts.id, ts.day_of_week, ts.start_time, ts.end_time, ts.is_active, ts.notes,
-        b.id as batch_id, b.name as batch_name, b.mode, b.max_seats, b.online_seat_limit,
-        c.id as course_id, c.name as course_name, c.code as course_code,
-        t.id as trainer_id, t.name as trainer_name, t.availability,
-        r.id as room_id, r.name as room_name, r.capacity as room_capacity
-      FROM timetable_slots ts
-      JOIN batches b ON b.id = ts.batch_id
-      JOIN courses c ON c.id = b.course_id
-      JOIN trainers t ON t.id = ts.trainer_id
-      LEFT JOIN rooms r ON r.id = ts.room_id
-      WHERE ts.is_active = 1 AND b.status != 'completed'
-    `;
-    const params: string[] = [];
-    if (trainerId) { query += ` AND ts.trainer_id = ?`; params.push(trainerId); }
-    if (roomId) { query += ` AND ts.room_id = ?`; params.push(roomId); }
-    query += ` ORDER BY CASE ts.day_of_week WHEN 'Mon' THEN 1 WHEN 'Tue' THEN 2 WHEN 'Wed' THEN 3 WHEN 'Thu' THEN 4 WHEN 'Fri' THEN 5 WHEN 'Sat' THEN 6 WHEN 'Sun' THEN 7 END, ts.start_time`;
+    if (user.role === 'student') {
+      const studentId = user.studentId || 's_001';
+      const { data: enrollments } = await client
+        .from('enrollments')
+        .select('batch_id')
+        .eq('student_id', studentId);
 
-    const slots = db.prepare(query).all(...params);
-    const trainers = db.prepare('SELECT id, name FROM trainers ORDER BY name').all();
-    const rooms = db.prepare('SELECT id, name, capacity FROM rooms ORDER BY name').all();
+      const batchIds = (enrollments || []).map((e: any) => e.batch_id);
+      if (batchIds.length > 0) {
+        slotsQuery = slotsQuery.in('batch_id', batchIds);
+      }
+    }
 
-    return NextResponse.json({ slots, trainers, rooms });
+    const { data: slotsData } = await slotsQuery;
+
+    const slots = (slotsData || [])
+      .filter((s: any) => !s.batches || s.batches.status !== 'completed')
+      .map((s: any) => ({
+        id: s.id,
+        day_of_week: s.day_of_week,
+        start_time: s.start_time,
+        end_time: s.end_time,
+        is_active: s.is_active,
+        notes: s.notes,
+        batch_id: s.batches?.id,
+        batch_name: s.batches?.name || '',
+        mode: s.batches?.mode || 'hybrid',
+        max_seats: s.batches?.max_seats || 30,
+        online_seat_limit: s.batches?.online_seat_limit || 30,
+        course_id: s.batches?.courses?.id,
+        course_name: s.batches?.courses?.name || '',
+        course_code: s.batches?.courses?.code || '',
+        trainer_id: s.batches?.trainers?.id,
+        trainer_name: s.batches?.trainers?.name || '',
+        availability: s.batches?.trainers?.availability || '{}',
+        room_id: s.batches?.rooms?.id || null,
+        room_name: s.batches?.rooms?.name || null,
+        room_capacity: s.batches?.rooms?.capacity || null
+      }));
+
+    return NextResponse.json({
+      slots,
+      trainers: trainersRes.data || [],
+      rooms: roomsRes.data || []
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -112,11 +143,16 @@ export async function POST(req: NextRequest) {
     if (user.role === 'student') {
       return NextResponse.json({ error: 'Forbidden: Students cannot re-plan timetables.' }, { status: 403 });
     }
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Database not configured.' }, { status: 500 });
+    }
+
     const body = await req.json();
     const { action } = body;
 
     if (action === 'mark_unavailable') {
-      return await handleMarkUnavailable(body);
+      return await handleMarkUnavailable(body, user);
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
@@ -125,27 +161,38 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function handleMarkUnavailable(body: any) {
-  const db = getDb();
+async function handleMarkUnavailable(body: any, user: any) {
+  const client = getSupabase();
+  if (!client) {
+    return NextResponse.json({ error: 'Database client unavailable.' }, { status: 500 });
+  }
+
   const { trainerId, day, startTime, endTime } = body;
 
   if (!trainerId || !day || !startTime || !endTime) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
-  // Find all slots that would be affected (trainer is scheduled during this period)
-  const affectedSlots = db.prepare(`
-    SELECT ts.*, b.name as batch_name, b.max_seats, b.online_seat_limit, b.course_id, b.mode,
-           r.capacity as room_capacity
-    FROM timetable_slots ts
-    JOIN batches b ON b.id = ts.batch_id
-    LEFT JOIN rooms r ON r.id = ts.room_id
-    WHERE ts.trainer_id = ? AND ts.day_of_week = ? AND ts.is_active = 1
-      AND (
-        (ts.start_time < ? AND ts.end_time > ?)
-        OR (ts.start_time >= ? AND ts.start_time < ?)
-      )
-  `).all(trainerId, day, endTime, startTime, startTime, endTime) as any[];
+  const { data: allSlotsData } = await client
+    .from('timetable_slots')
+    .select('id, batch_id, trainer_id, room_id, day_of_week, start_time, end_time')
+    .eq('is_active', 1);
+
+  const existingSlots: Slot[] = (allSlotsData || []).map((s: any) => ({
+    id: s.id,
+    batchId: s.batch_id,
+    trainerId: s.trainer_id,
+    roomId: s.room_id,
+    day: s.day_of_week,
+    startTime: s.start_time,
+    endTime: s.end_time
+  }));
+
+  const affectedSlots = existingSlots.filter(s =>
+    s.trainerId === trainerId &&
+    s.day === day &&
+    timesOverlap(s.startTime, s.endTime, startTime, endTime)
+  );
 
   if (affectedSlots.length === 0) {
     return NextResponse.json({
@@ -155,88 +202,65 @@ async function handleMarkUnavailable(body: any) {
     });
   }
 
-  // Get all trainers who can cover
-  const allTrainers = db.prepare('SELECT * FROM trainers').all() as any[];
-  const allRooms = db.prepare('SELECT * FROM rooms').all() as any[];
-  const existingSlots = db.prepare(
-    'SELECT id, batch_id, trainer_id, room_id, day_of_week as day, start_time as startTime, end_time as endTime FROM timetable_slots WHERE is_active = 1'
-  ).all() as Slot[];
+  const { data: allTrainers } = await client.from('trainers').select('*');
+  const { data: allRooms } = await client.from('rooms').select('*');
 
   const changes: any[] = [];
 
   for (const slot of affectedSlots) {
-    // Try to find an alternative trainer with matching specialization
-    const batchCourse = db.prepare('SELECT c.name, c.code FROM courses c JOIN batches b ON b.id = ? WHERE c.id = b.course_id').get(slot.batch_id) as any;
-
     let alternativeTrainer = null;
-    let alternativeRoom = slot.room_id;
+    let alternativeRoom = slot.roomId;
     let reason = '';
 
-    // Check if another trainer is available and not clashing
-    for (const trainer of allTrainers) {
+    for (const trainer of (allTrainers || [])) {
       if (trainer.id === trainerId) continue;
 
-      // Check availability JSON
       const avail = JSON.parse(trainer.availability || '{}') as Record<string, string[]>;
       const dayAvail = avail[day] || [];
       const isAvailable = dayAvail.some((range: string) => {
         const [rs, re] = range.split('-');
-        return timeToMinutes(rs) <= timeToMinutes(slot.start_time) &&
-               timeToMinutes(re) >= timeToMinutes(slot.end_time);
+        return timeToMinutes(rs) <= timeToMinutes(slot.startTime) &&
+               timeToMinutes(re) >= timeToMinutes(slot.endTime);
       });
 
       if (!isAvailable) continue;
-
-      // Check trainer clash
-      if (hasTrainerClash(existingSlots, trainer.id, day, slot.start_time, slot.end_time, slot.id)) continue;
+      if (hasTrainerClash(existingSlots, trainer.id, day, slot.startTime, slot.endTime, slot.id)) continue;
 
       alternativeTrainer = trainer;
-      reason = `Trainer ${trainer.name} is available ${day} ${slot.start_time}-${slot.end_time} and has no conflicts.`;
+      reason = `Trainer ${trainer.name} is available ${day} ${slot.startTime}-${slot.endTime} and has no conflicts.`;
       break;
     }
 
     if (!alternativeTrainer) {
-      // Try moving to a different time (same trainer, earlier or later)
       changes.push({
         slotId: slot.id,
-        batchName: slot.batch_name,
         originalDay: day,
-        originalStart: slot.start_time,
-        originalEnd: slot.end_time,
+        originalStart: slot.startTime,
+        originalEnd: slot.endTime,
         action: 'could_not_replan',
-        reason: 'No alternative trainer or time slot found. Manual intervention required.'
+        reason: 'No alternative trainer found. Manual intervention required.'
       });
       continue;
     }
 
-    // Check room availability for alternative trainer
-    if (slot.room_id && hasRoomClash(existingSlots, slot.room_id, day, slot.start_time, slot.end_time, slot.id)) {
-      // Find alternative room
-      for (const room of allRooms) {
-        if (room.id === slot.room_id) continue;
-        if (room.capacity < (slot.max_seats || 20)) continue;
-        if (!hasRoomClash(existingSlots, room.id, day, slot.start_time, slot.end_time, slot.id)) {
+    if (slot.roomId && hasRoomClash(existingSlots, slot.roomId, day, slot.startTime, slot.endTime, slot.id)) {
+      for (const room of (allRooms || [])) {
+        if (room.id === slot.roomId) continue;
+        if (!hasRoomClash(existingSlots, room.id, day, slot.startTime, slot.endTime, slot.id)) {
           alternativeRoom = room.id;
-          reason += ` Room ${room.name} was free and has sufficient capacity.`;
+          reason += ` Room ${room.name} was free.`;
           break;
         }
       }
     }
 
-    // Apply the change
-    db.prepare(`
-      UPDATE timetable_slots
-      SET trainer_id = ?, room_id = ?,
-          notes = ?
-      WHERE id = ?
-    `).run(
-      alternativeTrainer.id,
-      alternativeRoom,
-      `Replanned: ${trainerId} unavailable ${day} ${startTime}-${endTime}. Assigned to ${alternativeTrainer.name}.`,
-      slot.id
-    );
+    await upsertToSupabase('timetable_slots', {
+      id: slot.id,
+      trainer_id: alternativeTrainer.id,
+      room_id: alternativeRoom,
+      notes: `Replanned: ${trainerId} unavailable ${day} ${startTime}-${endTime}. Assigned to ${alternativeTrainer.name}.`
+    });
 
-    // Update existingSlots in-memory too
     const slotIdx = existingSlots.findIndex(s => s.id === slot.id);
     if (slotIdx >= 0) {
       existingSlots[slotIdx].trainerId = alternativeTrainer.id;
@@ -245,29 +269,29 @@ async function handleMarkUnavailable(body: any) {
 
     changes.push({
       slotId: slot.id,
-      batchName: slot.batch_name,
       originalDay: day,
-      originalStart: slot.start_time,
-      originalEnd: slot.end_time,
+      originalStart: slot.startTime,
+      originalEnd: slot.endTime,
       originalTrainer: trainerId,
       newTrainer: alternativeTrainer.name,
       newTrainerId: alternativeTrainer.id,
-      originalRoom: slot.room_id,
+      originalRoom: slot.roomId,
       newRoom: alternativeRoom,
       action: 'reassigned',
       reason
     });
   }
 
-  // Log replan in audit
-  db.prepare(`
-    INSERT INTO audit_log (id, user_id, user_name, role, action, query, result_summary, status)
-    VALUES (?, 'system', 'Scheduler', 'owner', 'timetable_replan', ?, ?, 'success')
-  `).run(
-    `aud_replan_${Date.now()}`,
-    `Trainer ${trainerId} marked unavailable on ${day} ${startTime}-${endTime}`,
-    `Replanned ${changes.filter(c => c.action === 'reassigned').length} slot(s)`
-  );
+  await upsertToSupabase('audit_log', {
+    id: `aud_replan_${Date.now()}`,
+    user_id: user.id || 'system',
+    user_name: user.name || 'Scheduler',
+    role: user.role || 'owner',
+    action: 'timetable_replan',
+    query: `Trainer ${trainerId} marked unavailable on ${day} ${startTime}-${endTime}`,
+    result_summary: `Replanned ${changes.filter(c => c.action === 'reassigned').length} slot(s)`,
+    status: 'success'
+  });
 
   return NextResponse.json({
     message: `Timetable re-planned. ${changes.filter(c => c.action === 'reassigned').length} slot(s) reassigned.`,

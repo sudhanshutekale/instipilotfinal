@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     let proof: any = null;
 
-    // Fetch proof from Supabase or SQLite
+    // Fetch proof from Supabase
     if (isSupabaseConfigured()) {
       const client = getSupabase();
       if (client) {
@@ -53,17 +53,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (!proof) {
-      const db = getDb();
-      proof = db.prepare(`
-        SELECT p.*, s.name as student_name, s.email as student_email, e.installment_no
-        FROM payment_proofs p
-        JOIN students s ON s.id = p.student_id
-        JOIN emi_installments e ON e.id = p.emi_id
-        WHERE p.id = ?
-      `).get(proofId) as any;
-    }
-
-    if (!proof) {
       return NextResponse.json({ error: 'Payment proof not found' }, { status: 404 });
     }
 
@@ -75,7 +64,7 @@ export async function POST(req: NextRequest) {
     const nowIso = new Date().toISOString();
     const paymentId = `pay_verified_${Date.now()}`;
 
-    // 1. Persist to Supabase Cloud
+    // Persist to Supabase Cloud
     if (isSupabaseConfigured()) {
       await upsertToSupabase('payment_proofs', {
         id: proof.id,
@@ -112,51 +101,6 @@ export async function POST(req: NextRequest) {
         result_summary: `Owner verified photo proof for ${proof.student_name} (Installment #${proof.installment_no}, ₹${proof.amount?.toLocaleString('en-IN')}, UTR: ${proof.reference})`,
         status: 'success'
       });
-    }
-
-    // 2. Also persist to SQLite if available
-    try {
-      const db = getDb();
-      db.prepare(`
-        UPDATE payment_proofs
-        SET status = 'verified',
-            verified_by = ?,
-            verified_at = CURRENT_TIMESTAMP,
-            rejection_reason = NULL
-        WHERE id = ?
-      `).run(user.id || 'u_owner', proof.id);
-
-      db.prepare(`
-        UPDATE emi_installments
-        SET status = 'paid',
-            paid_date = CURRENT_DATE
-        WHERE id = ?
-      `).run(proof.emi_id);
-
-      db.prepare(`
-        INSERT INTO payments (id, emi_id, student_id, source, reference, amount, date, notes, status)
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_DATE, ?, 'verified')
-      `).run(
-        paymentId,
-        proof.emi_id,
-        proof.student_id,
-        proof.payment_mode || 'upi',
-        proof.reference,
-        proof.amount,
-        `Owner verified photo proof (UTR: ${proof.reference})`
-      );
-
-      db.prepare(`
-        INSERT INTO audit_log (id, user_id, user_name, role, action, result_summary, status)
-        VALUES (?, ?, ?, 'owner', 'OWNER_VERIFIED_PAYMENT_PROOF', ?, 'success')
-      `).run(
-        `aud_${Date.now()}`,
-        user.id || 'u_owner',
-        user.name || 'Owner',
-        `Owner verified photo proof for ${proof.student_name} (Installment #${proof.installment_no}, ₹${proof.amount?.toLocaleString('en-IN')}, UTR: ${proof.reference})`
-      );
-    } catch (e) {
-      // Ignore SQLite write error in serverless
     }
 
     return NextResponse.json({

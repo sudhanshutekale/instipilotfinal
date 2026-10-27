@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/rbac/auth';
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Simple fuzzy name match: checks if any word in the sender name
- * matches the beginning of any word in a student name.
+ * Simple fuzzy name match
  */
 function fuzzyNameMatch(senderName: string, studentName: string): number {
   if (!senderName || !studentName) return 0;
@@ -33,6 +33,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Database not configured.' }, { status: 500 });
+    }
+
+    const client = getSupabase();
+    if (!client) {
+      return NextResponse.json({ error: 'Database client unavailable.' }, { status: 500 });
+    }
+
     const body = await req.json();
     const { transactions } = body;
 
@@ -40,17 +49,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid transactions array' }, { status: 400 });
     }
 
-    const db = getDb();
-
     // Get all pending/overdue EMIs with student info
-    const pendingEmis = db.prepare(`
-      SELECT e.id as emi_id, e.student_id, e.amount, e.due_date, e.status,
-             s.name as student_name, s.phone as student_phone
-      FROM emi_installments e
-      JOIN students s ON s.id = e.student_id
-      WHERE e.status IN ('pending', 'overdue')
-      ORDER BY e.due_date ASC
-    `).all() as any[];
+    const { data: emiData, error: emiErr } = await client
+      .from('emi_installments')
+      .select(`
+        id, student_id, amount, due_date, status,
+        students ( name, phone )
+      `)
+      .in('status', ['pending', 'overdue'])
+      .order('due_date', { ascending: true });
+
+    if (emiErr) {
+      return NextResponse.json({ error: emiErr.message }, { status: 500 });
+    }
+
+    const pendingEmis = (emiData || []).map((e: any) => ({
+      emi_id: e.id,
+      student_id: e.student_id,
+      amount: e.amount,
+      due_date: e.due_date,
+      status: e.status,
+      student_name: e.students?.name || '',
+      student_phone: e.students?.phone || ''
+    }));
 
     const matches = transactions.map((txn: any) => {
       const { reference, amount, date, senderName } = txn;
@@ -61,22 +82,17 @@ export async function POST(req: NextRequest) {
       for (const emi of pendingEmis) {
         let confidence = 0;
 
-        // 1. Exact amount match (strongest signal, +50)
         if (Math.abs(emi.amount - amount) < 1) {
           confidence += 50;
-        }
-        // Close amount (within 5%, +20)
-        else if (Math.abs(emi.amount - amount) / emi.amount < 0.05) {
+        } else if (Math.abs(emi.amount - amount) / emi.amount < 0.05) {
           confidence += 20;
         }
 
-        // 2. Name fuzzy match (+40 max)
         if (senderName) {
           const nameScore = fuzzyNameMatch(senderName, emi.student_name);
           confidence += Math.round(nameScore * 0.4);
         }
 
-        // 3. Reference contains student ID fragment (+10)
         if (reference && emi.student_id) {
           const idFragment = emi.student_id.replace('s_', '');
           if (reference.toLowerCase().includes(idFragment)) {

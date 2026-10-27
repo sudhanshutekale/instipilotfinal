@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     let msgId = id || `msg_${Date.now()}`;
     const nowIso = new Date().toISOString();
 
-    // 1. Persist to Supabase Cloud
+    // Persist to Supabase Cloud
     if (isSupabaseConfigured()) {
       if (id) {
         await upsertToSupabase('messages_outbox', {
@@ -55,45 +55,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 2. Also persist to SQLite if available
-    try {
-      const db = getDb();
-      if (id) {
-        db.prepare(`
-          UPDATE messages_outbox
-          SET status = 'approved', approved_by = ?, approved_at = datetime('now')
-          WHERE id = ?
-        `).run(user.name, id);
-      } else {
-        db.prepare(`
-          INSERT INTO messages_outbox (id, student_id, recipient_phone, recipient_name, channel, message_text, draft_reason, status, created_by_role, approved_by, approved_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, 'approved', ?, ?, datetime('now'))
-        `).run(
-          msgId,
-          studentId || null,
-          recipientPhone,
-          recipientName || 'Student',
-          channel || 'whatsapp',
-          messageText,
-          draftReason || 'Approved via Copilot or Dashboard',
-          user.role,
-          user.name
-        );
-      }
-
-      db.prepare(`
-        INSERT INTO audit_log (id, user_id, user_name, role, action, query, result_summary, status)
-        VALUES (?, ?, ?, ?, 'action_approved', ?, ?, 'success')
-      `).run(
-        `aud_approve_${Date.now()}`,
-        user.id, user.name, user.role,
-        `Approved WhatsApp message to ${recipientName || 'Student'} (${recipientPhone || 'N/A'})`,
-        `Message: ${(messageText || 'Outbox message approved').slice(0, 80)}...`
-      );
-    } catch (e) {
-      // Ignore SQLite write error in serverless
-    }
-
     return NextResponse.json({ success: true, msgId });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -107,7 +68,6 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // 1. Try Supabase Cloud
     if (isSupabaseConfigured()) {
       const client = getSupabase();
       if (client) {
@@ -130,17 +90,7 @@ export async function GET() {
       }
     }
 
-    // 2. Fallback to SQLite
-    const db = getDb();
-    const messages = db.prepare(`
-      SELECT o.*, s.name as student_name_linked
-      FROM messages_outbox o
-      LEFT JOIN students s ON s.id = o.student_id
-      ORDER BY o.created_at DESC
-      LIMIT 50
-    `).all();
-
-    return NextResponse.json({ messages });
+    return NextResponse.json({ messages: [] });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

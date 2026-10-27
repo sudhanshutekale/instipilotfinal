@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/rbac/auth';
 import { ROLE_PERMISSIONS, UserRole } from '@/lib/rbac/permissions';
 import { validateSqlQuery, executeSafeQuery } from '@/lib/rbac/query-guard';
+import { getSupabase, isSupabaseConfigured, upsertToSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ WHERE b.id = 'b_java_m1'
 GROUP BY s.id
 HAVING missed_classes >= 3
 ORDER BY missed_classes DESC`,
-      explanation: `🎯 Found 2 high-risk students in the Java Fullstack Morning batch with ≥3 missed classes AND a pending EMI due this week:\n\n• **Rohan Gupta** — Missed 5 classes! EMI of ₹11,667 due Oct 19 (3 days away)\n• **Ananya Deshmukh** — Missed 3 classes. EMI of ₹11,667 due Oct 18 (tomorrow)\n\nBoth students are at immediate dropout risk. WhatsApp reminder drafts are ready for approval below.`,
+      explanation: `🎯 Found 2 high-risk students in the Java Fullstack Morning batch with ≥3 missed classes AND a pending EMI due this week:\n\n• **Rohan Gupta** — Missed 5 classes! EMI of ₹11,667 due Oct 19\n• **Ananya Deshmukh** — Missed 3 classes. EMI of ₹11,667 due Oct 18\n\nBoth students are at immediate dropout risk. WhatsApp reminder drafts are ready for approval below.`,
       action: {
         type: 'whatsapp_draft',
         items: [
@@ -56,7 +57,7 @@ WHERE e.status = 'overdue'
 GROUP BY s.id
 HAVING overdue_count >= 1
 ORDER BY overdue_count DESC, total_overdue DESC`,
-      explanation: `💳 Found students with overdue installments:\n\n• **Amit Patel** — 2 CONSECUTIVE missed EMIs! Total overdue: ₹23,334. This is a critical financial default signal — lab access should be reviewed.\n\nAdditionally, several students in the AI/ML and MERN batches have 1 overdue EMI each. A bulk reminder batch has been drafted below.`,
+      explanation: `💳 Found students with overdue installments:\n\n• **Amit Patel** — 2 CONSECUTIVE missed EMIs! Total overdue: ₹23,334.\n\nSeveral students in the AI/ML and MERN batches have 1 overdue EMI each. A bulk reminder batch has been drafted below.`,
       action: {
         type: 'whatsapp_draft',
         items: [
@@ -64,7 +65,7 @@ ORDER BY overdue_count DESC, total_overdue DESC`,
             studentId: 's_012',
             recipientName: 'Amit Patel',
             recipientPhone: '+91 9820044444',
-            messageText: 'Dear Amit, this is a formal notice from InstiPilot Academy Accounts.\n\nTwo consecutive course installments totalling ₹23,334 for your Python Data Engineering course remain overdue. Continued non-payment may affect your lab access and certification eligibility.\n\nPlease contact our accounts office today or transfer via:\nAccount: ICICI 482910xxxx\nUPI: accounts@instipilot.upi\n\nWe\'re happy to discuss a flexible arrangement. 🙏',
+            messageText: 'Dear Amit, this is a formal notice from InstiPilot Academy Accounts.\n\nTwo consecutive course installments totalling ₹23,334 remain overdue. Please contact our accounts office today.\n\nWe\'re happy to discuss a flexible arrangement. 🙏',
             reason: '2 consecutive overdue EMIs — ₹23,334 total'
           }
         ]
@@ -76,17 +77,16 @@ ORDER BY overdue_count DESC, total_overdue DESC`,
     response: {
       sql: `SELECT s.id, s.name, s.phone, b.name as batch_name,
   COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as missed_classes,
-  COUNT(CASE WHEN e.status = 'overdue' THEN 1 END) as overdue_emis,
-  (COUNT(CASE WHEN a.status = 'absent' THEN 1 END) * 10 + COUNT(CASE WHEN e.status = 'overdue' THEN 1 END) * 20) as risk_score
+  COUNT(CASE WHEN e.status = 'overdue' THEN 1 END) as overdue_emis
 FROM students s
 JOIN enrollments en ON en.student_id = s.id
 JOIN batches b ON b.id = en.batch_id
 LEFT JOIN attendance a ON a.student_id = s.id AND a.batch_id = b.id
 LEFT JOIN emi_installments e ON e.student_id = s.id
 GROUP BY s.id
-ORDER BY risk_score DESC
+ORDER BY missed_classes DESC
 LIMIT 5`,
-      explanation: `🚨 **Top 5 Dropout-Risk Students** (Multi-factor Analysis):\n\n1. **Amit Patel** — Score: 92/100 | 2 overdue EMIs + 5 absences\n2. **Sneha Verma** — Score: 84/100 | 4 missed AI labs + overdue fee\n3. **Siddharth Kulkarni** — Score: 85/100 | 6 Java absences, 0 assignments submitted\n4. **Kavita Nair** — Score: 82/100 | 5 consecutive MERN absences\n5. **Rohan Gupta** — Score: 88/100 | 5 absences + EMI due in 3 days\n\n**Recommended Action:** Initiate counselor outreach for all 5 within 24 hours.`,
+      explanation: `🚨 **Top 5 Dropout-Risk Students** (Multi-factor Analysis):\n\n1. **Amit Patel** — 2 overdue EMIs + 5 absences\n2. **Sneha Verma** — 4 missed AI labs + overdue fee\n3. **Siddharth Kulkarni** — 6 Java absences\n4. **Kavita Nair** — 5 consecutive MERN absences\n5. **Rohan Gupta** — 5 absences + EMI due in 3 days\n\n**Recommended Action:** Initiate counselor outreach for all 5 within 24 hours.`,
       action: null
     }
   },
@@ -100,7 +100,7 @@ JOIN batches b ON b.id = ts.batch_id
 LEFT JOIN rooms r ON r.id = ts.room_id
 WHERE ts.trainer_id = 't_vikram'
 ORDER BY ts.day_of_week, ts.start_time`,
-      explanation: `⚠️ **Trainer Near Double-Booking Alert — Vikram Malhotra:**\n\nVikram is currently assigned to **3 batches on Mon/Wed/Fri**:\n- 08:00–10:00 → Java Fullstack Morning (Lab Alpha)\n- 10:15–12:15 → Java Sprint Fast-Track (Classroom 201)\n- 18:00–20:00 → Java Evening Pro (Classroom 201)\n\n**Critical:** The buffer between batch 1 and batch 2 is only **15 minutes** — insufficient for equipment reset and lab changeover. Room 201 is double-booked at 10:15 if students from morning don't vacate in time.\n\nRecommend using the Timetable Re-planner to shift one batch to Room 202.`,
+      explanation: `⚠️ **Trainer Near Double-Booking Alert — Vikram Malhotra:**\n\nVikram is currently assigned to **3 batches on Mon/Wed/Fri**. The buffer between batch 1 and batch 2 is only **15 minutes** — insufficient for equipment reset.\n\nRecommend using the Timetable Re-planner to shift one batch to Room 202.`,
       action: null
     }
   },
@@ -110,7 +110,7 @@ ORDER BY ts.day_of_week, ts.start_time`,
       sql: null,
       explanation: null,
       blocked: true,
-      blockedReason: `🛡️ **Access Blocked by InstiPilot RBAC Policy**\n\nYour current role does not have authorization to query financial tables (fee_plans, emi_installments, payments).\n\nThe schema-aware copilot strictly filters which database tables are included in its context based on your role — financial data is never exposed to Trainer or Counselor sessions.\n\nTo access fee data, please switch to the **Accounts** or **Owner** role.`
+      blockedReason: `🛡️ **Access Blocked by InstiPilot RBAC Policy**\n\nYour current role does not have authorization to query financial tables (fee_plans, emi_installments, payments).\n\nTo access fee data, please switch to the **Accounts** or **Owner** role.`
     }
   },
   {
@@ -119,30 +119,31 @@ ORDER BY ts.day_of_week, ts.start_time`,
       sql: `SELECT b.name as batch_name, 
   COUNT(a.id) as total_sessions,
   COUNT(CASE WHEN a.status = 'present' THEN 1 END) as present,
-  COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent,
-  ROUND(COUNT(CASE WHEN a.status = 'present' THEN 1 END) * 100.0 / COUNT(a.id), 1) as attendance_pct
+  COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent
 FROM attendance a
 JOIN batches b ON b.id = a.batch_id
 GROUP BY b.id
-ORDER BY attendance_pct ASC`,
-      explanation: `📊 **Attendance Summary Across All Active Batches:**\n\nAll 8 batches are being tracked with biometric + Zoom WebSDK dual-verification. Current overall attendance rate is **89.2%**.\n\nBatches with below-average attendance:\n- Java Fullstack Morning: 82% (Rohan & Ananya pulling rate down)\n- Python Data Engineering: 78% (Amit Patel, 5 consecutive absences)\n\nFull breakdown is shown in the result table above.`,
+ORDER BY present ASC`,
+      explanation: `📊 **Attendance Summary Across All Active Batches:**\n\nAll batches are tracked with biometric + Zoom dual-verification. Current overall attendance rate is **89.2%**.\n\nFull breakdown is shown in the result table above.`,
       action: null
     }
   }
 ];
 
-interface StudentMatchResult {
-  type: 'single' | 'multiple';
-  student?: any;
-  students?: any[];
-}
+// ─────────────────────────────────────────────
+// Supabase-based student lookup
+// ─────────────────────────────────────────────
+async function findStudentByQuery(question: string): Promise<{ type: 'single' | 'multiple'; student?: any; students?: any[] } | null> {
+  if (!isSupabaseConfigured()) return null;
+  const client = getSupabase();
+  if (!client) return null;
 
-function findStudentByQuery(question: string): StudentMatchResult | null {
-  const db = getDb();
+  const { data: allStudents } = await client.from('students').select('id, name, phone, email');
+  if (!allStudents) return null;
+
   const qLower = question.toLowerCase().trim();
-  const allStudents = db.prepare('SELECT id, name, phone, email FROM students').all() as any[];
 
-  // 1. Direct ID match (e.g. s_001, s_012)
+  // 1. Direct ID match
   const idMatch = qLower.match(/\b(s_\d{3,4})\b/i);
   if (idMatch) {
     const student = allStudents.find(s => s.id.toLowerCase() === idMatch[1].toLowerCase());
@@ -156,292 +157,159 @@ function findStudentByQuery(question: string): StudentMatchResult | null {
     if (phoneStudent) return { type: 'single', student: phoneStudent };
   }
 
-  // 3. Exact full name match (case insensitive)
+  // 3. Full name match
   const exactMatches = allStudents.filter(s => qLower.includes(s.name.toLowerCase()));
-  if (exactMatches.length === 1) {
-    return { type: 'single', student: exactMatches[0] };
-  } else if (exactMatches.length > 1) {
-    return { type: 'multiple', students: exactMatches };
-  }
+  if (exactMatches.length === 1) return { type: 'single', student: exactMatches[0] };
+  if (exactMatches.length > 1) return { type: 'multiple', students: exactMatches };
 
-  // 4. Tokenized first name or last name match
-  const words = qLower.split(/[^a-zA-Z0-9]+/).filter(Boolean);
-  const commonWords = new Set([
-    'show', 'tell', 'give', 'find', 'what', 'who', 'about', 'details', 'detail',
-    'student', 'students', 'the', 'all', 'for', 'any', 'please', 'with', 'from',
-    'where', 'when', 'info', 'information', 'batch', 'course', 'class', 'classes',
-    'attendance', 'fee', 'fees', 'emi', 'emis', 'status', 'record', 'records', 'me', 'is', 'a',
-    'in', 'of', 'and', 'or', 'to', 'can', 'you', 'profile', 'dossier', 'card', 'report'
-  ]);
+  // 4. First/last name token match
+  const commonWords = new Set(['show', 'tell', 'give', 'find', 'what', 'who', 'about', 'details', 'student', 'the', 'all', 'for', 'any', 'please', 'with', 'from', 'info', 'batch', 'course', 'class', 'attendance', 'fee', 'emi', 'status', 'record', 'me', 'is', 'a', 'in', 'of', 'and', 'or', 'to']);
+  const words = qLower.split(/[^a-zA-Z0-9]+/).filter(w => w.length >= 3 && !commonWords.has(w));
 
   const candidateMap = new Map<string, any>();
   for (const s of allStudents) {
     const parts = s.name.toLowerCase().split(/\s+/);
-    const firstName = parts[0];
-    const lastName = parts.slice(1).join(' ');
-
     for (const w of words) {
-      if (w.length >= 3 && !commonWords.has(w)) {
-        if (firstName === w || lastName === w || parts.includes(w)) {
-          candidateMap.set(s.id, s);
-        }
+      if (parts.includes(w)) {
+        candidateMap.set(s.id, s);
       }
     }
   }
 
   const candidateList = Array.from(candidateMap.values());
-  if (candidateList.length === 1) {
-    return { type: 'single', student: candidateList[0] };
-  } else if (candidateList.length > 1) {
-    return { type: 'multiple', students: candidateList };
-  }
+  if (candidateList.length === 1) return { type: 'single', student: candidateList[0] };
+  if (candidateList.length > 1) return { type: 'multiple', students: candidateList };
 
   return null;
 }
 
-function buildMultipleStudentsResponse(students: any[], role: UserRole) {
-  const db = getDb();
-  const summaryRows = students.slice(0, 8).map((s) => {
-    const profile = db.prepare(`
-      SELECT b.name as batch_name, c.name as course_name
-      FROM enrollments en
-      LEFT JOIN batches b ON b.id = en.batch_id
-      LEFT JOIN courses c ON c.id = b.course_id
-      WHERE en.student_id = ?
-      LIMIT 1
-    `).get(s.id) as any;
+async function buildStudentResponse(student: any, role: UserRole) {
+  if (!isSupabaseConfigured()) return null;
+  const client = getSupabase();
+  if (!client) return null;
 
-    const att = db.prepare(`
-      SELECT 
-        COUNT(*) as total,
-        COUNT(CASE WHEN status = 'present' THEN 1 END) as present,
-        COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent
-      FROM attendance WHERE student_id = ?
-    `).get(s.id) as any;
-
-    const attPct = att && att.total > 0 ? Math.round((att.present / att.total) * 100) : 100;
-
-    let feeInfo = '';
-    if (role !== 'trainer') {
-      const fee = db.prepare(`
-        SELECT 
-          (SELECT COALESCE(SUM(amount), 0) FROM emi_installments WHERE student_id = ? AND status = 'overdue') as overdue
-        FROM fee_plans WHERE student_id = ? LIMIT 1
-      `).get(s.id, s.id) as any;
-      feeInfo = fee && fee.overdue > 0 ? `| 🚨 Overdue: ₹${fee.overdue.toLocaleString('en-IN')}` : `| ✅ Fees: Clear`;
-    }
-
-    return `• **${s.name}** (\`${s.id}\`) — Batch: **${profile?.batch_name || 'Assigned Cohort'}** | Attendance: **${attPct}%** (${att?.absent || 0} absent) ${feeInfo}\n  👉 *Ask: "Show details of ${s.name}"*`;
-  }).join('\n\n');
-
-  const studentIds = students.slice(0, 8).map(s => `'${s.id}'`).join(',');
-  const sql = `SELECT s.id, s.name, s.phone, s.email, b.name as batch_name
-FROM students s
-LEFT JOIN enrollments en ON en.student_id = s.id
-LEFT JOIN batches b ON b.id = en.batch_id
-WHERE s.id IN (${studentIds})
-LIMIT 10`;
-
-  const explanation = `### 🔍 Multiple Students Matched (${students.length} found)\n\nPlease specify which student you would like to inspect in detail:\n\n${summaryRows}\n\n---\n*Tip: You can query by exact full name (e.g. \`Aarav Gupta\`) or ID (e.g. \`s_001\`) to load their full dossier, timetable, and EMI records.*`;
-
-  return {
-    sql,
-    explanation,
-    action: null
-  };
-}
-
-
-function buildStudentResponse(student: any, role: UserRole) {
-  const db = getDb();
   const sId = student.id;
 
-  // 1. Core Profile & Course & Batch
-  const profile = db.prepare(`
-    SELECT 
-      s.id, s.name, s.email, s.phone, s.status, s.join_date,
-      s.guardian_name, s.guardian_phone,
-      b.id as batch_id, b.name as batch_name, b.days, b.start_time, b.end_time, b.mode,
-      c.name as course_name, c.code as course_code, c.duration_weeks, c.total_fee,
-      t.name as trainer_name, t.phone as trainer_phone,
-      r.name as room_name
-    FROM students s
-    LEFT JOIN enrollments en ON en.student_id = s.id
-    LEFT JOIN batches b ON b.id = en.batch_id
-    LEFT JOIN courses c ON c.id = b.course_id
-    LEFT JOIN trainers t ON t.id = b.trainer_id
-    LEFT JOIN rooms r ON r.id = b.room_id
-    WHERE s.id = ?
-    LIMIT 1
-  `).get(sId) as any || student;
+  const [enrRes, attRes, emiRes] = await Promise.all([
+    client.from('enrollments').select(`
+      batch_id,
+      batches ( id, name, days, start_time, end_time, mode,
+        courses ( name, code, duration_weeks, total_fee ),
+        trainers ( name, phone ),
+        rooms ( name )
+      )
+    `).eq('student_id', sId).limit(1).maybeSingle(),
+    client.from('attendance').select('status').eq('student_id', sId),
+    role !== 'trainer' ? client.from('emi_installments').select('installment_no, amount, due_date, status').eq('student_id', sId).order('installment_no') : Promise.resolve({ data: [] })
+  ]);
 
-  // 2. Attendance stats
-  const att = db.prepare(`
-    SELECT 
-      COUNT(*) as total_sessions,
-      COUNT(CASE WHEN status = 'present' THEN 1 END) as present_sessions,
-      COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent_sessions,
-      COUNT(CASE WHEN status = 'late' THEN 1 END) as late_sessions
-    FROM attendance 
-    WHERE student_id = ?
-  `).get(sId) as any || { total_sessions: 0, present_sessions: 0, absent_sessions: 0, late_sessions: 0 };
+  const enr: any = enrRes.data;
+  const batch = Array.isArray(enr?.batches) ? enr?.batches[0] : enr?.batches;
+  const course = Array.isArray(batch?.courses) ? batch?.courses[0] : batch?.courses;
+  const trainer = Array.isArray(batch?.trainers) ? batch?.trainers[0] : batch?.trainers;
+  const room = Array.isArray(batch?.rooms) ? batch?.rooms[0] : batch?.rooms;
 
-  const attPct = att.total_sessions > 0
-    ? Math.round(((att.present_sessions + att.late_sessions * 0.5) / att.total_sessions) * 100)
-    : 100;
+  const attList = attRes.data || [];
+  const totalSessions = attList.length;
+  const presentSessions = attList.filter((a: any) => a.status === 'present').length;
+  const absentSessions = attList.filter((a: any) => a.status === 'absent').length;
+  const attPct = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 100;
 
-  // 3. Fee & EMIs (if role allows)
+  const emis: any[] = emiRes?.data || [];
+  const overdueEmis = emis.filter(e => e.status === 'overdue');
+  const overdueEmi = overdueEmis.reduce((s: number, e: any) => s + (Number(e.amount) || 0), 0);
+
   let feeSection = '';
-  let emis: any[] = [];
-  let pendingEmi = 0;
-  let overdueEmi = 0;
-
-  const canViewFees = role === 'owner' || role === 'accounts' || role === 'counselor' || role === 'student';
-  if (canViewFees) {
-    const fee = db.prepare(`
-      SELECT 
-        fp.total_amount, fp.down_payment, fp.num_installments, fp.discount,
-        (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE student_id = ? AND status = 'verified') as total_paid,
-        (SELECT COALESCE(SUM(amount), 0) FROM emi_installments WHERE student_id = ? AND status = 'pending') as pending_emi_amount,
-        (SELECT COALESCE(SUM(amount), 0) FROM emi_installments WHERE student_id = ? AND status = 'overdue') as overdue_emi_amount,
-        (SELECT COUNT(*) FROM emi_installments WHERE student_id = ? AND status = 'overdue') as overdue_emi_count
-      FROM fee_plans fp
-      WHERE fp.student_id = ?
-      LIMIT 1
-    `).get(sId, sId, sId, sId, sId) as any;
-
-    emis = db.prepare(`
-      SELECT installment_no, amount, due_date, status
-      FROM emi_installments
-      WHERE student_id = ?
-      ORDER BY installment_no ASC
-    `).all(sId) as any[];
-
-    if (fee) {
-      pendingEmi = fee.pending_emi_amount || 0;
-      overdueEmi = fee.overdue_emi_amount || 0;
-      const emiListText = emis.map(e => `  • Installment #${e.installment_no}: ₹${e.amount?.toLocaleString('en-IN')} (Due: ${e.due_date}) — **${e.status.toUpperCase()}**`).join('\n');
-
-      feeSection = `\n\n💳 **Fee & EMI Breakdown**:\n• Total Course Fee: **₹${fee.total_amount?.toLocaleString('en-IN')}** | Total Paid: **₹${fee.total_paid?.toLocaleString('en-IN')}**\n• Overdue Amount: **${overdueEmi > 0 ? `🚨 ₹${overdueEmi.toLocaleString('en-IN')} (${fee.overdue_emi_count} overdue)` : 'None (₹0)'}**\n• Pending Balance: **₹${pendingEmi.toLocaleString('en-IN')}**\n\n**Installment Schedule**:\n${emiListText || '  • No installments configured'}`;
-    }
+  if (role !== 'trainer') {
+    const emiListText = emis.map(e => `  • Installment #${e.installment_no}: ₹${e.amount?.toLocaleString('en-IN')} (Due: ${e.due_date}) — **${e.status.toUpperCase()}**`).join('\n');
+    feeSection = `\n\n💳 **Fee & EMI Breakdown**:\n• Overdue Amount: **${overdueEmi > 0 ? `🚨 ₹${overdueEmi.toLocaleString('en-IN')}` : 'None (₹0)'}**\n\n**Installment Schedule**:\n${emiListText || '  • No installments configured'}`;
   } else {
     feeSection = `\n\n🛡️ **Financial Data Hidden**\n*Financial ledger & EMI balances are hidden for Trainer session per RBAC policy.*`;
   }
 
-  // 4. Academics
-  const academics = db.prepare(`
-    SELECT 
-      COUNT(sub.id) as submitted_count,
-      ROUND(AVG(sub.marks), 1) as avg_marks
-    FROM submissions sub
-    WHERE sub.student_id = ?
-  `).get(sId) as any || { submitted_count: 0, avg_marks: null };
-
-  // 5. Risk Assessment
   let riskBadge = '🟢 Low Risk';
-  if (att.absent_sessions >= 4 || overdueEmi > 0) {
-    riskBadge = '🔴 High Dropout Risk';
-  } else if (att.absent_sessions >= 2) {
-    riskBadge = '🟡 Moderate Warning';
-  }
+  if (absentSessions >= 4 || overdueEmi > 0) riskBadge = '🔴 High Dropout Risk';
+  else if (absentSessions >= 2) riskBadge = '🟡 Moderate Warning';
 
-  // 6. Action Preview (WhatsApp message draft)
   let action = null;
-  if (att.absent_sessions >= 2 || overdueEmi > 0) {
+  if (absentSessions >= 2 || overdueEmi > 0) {
     action = {
       type: 'whatsapp_draft',
-      items: [
-        {
-          studentId: profile.id,
-          recipientName: profile.name,
-          recipientPhone: profile.phone,
-          messageText: `Hi ${profile.name.split(' ')[0]} 👋, InstiPilot Academic Office here.\n\nWe wanted to check in on you. You've missed ${att.absent_sessions} classes in your ${profile.batch_name || 'course'} batch.${overdueEmi > 0 ? ` Also, your pending course fee of ₹${overdueEmi.toLocaleString('en-IN')} is overdue.` : ''}\n\nTrainer ${profile.trainer_name || 'Vikram'} has lecture recordings available for you to catch up. Please reach out if you need any academic support! 🚀`,
-          reason: `${att.absent_sessions} missed classes${overdueEmi > 0 ? ` + ₹${overdueEmi.toLocaleString('en-IN')} overdue` : ''}`
-        }
-      ]
+      items: [{
+        studentId: sId,
+        recipientName: student.name,
+        recipientPhone: student.phone,
+        messageText: `Hi ${student.name.split(' ')[0]} 👋, InstiPilot Academic Office here.\n\nWe noticed you've missed ${absentSessions} classes.${overdueEmi > 0 ? ` Also, your pending course fee of ₹${overdueEmi.toLocaleString('en-IN')} is overdue.` : ''}\n\nPlease reach out if you need any support! 🚀`,
+        reason: `${absentSessions} missed classes${overdueEmi > 0 ? ` + ₹${overdueEmi.toLocaleString('en-IN')} overdue` : ''}`
+      }]
     };
   }
 
-  // Construct Markdown Explanation
-  const explanation = `### 🧑‍🎓 Student Dossier: **${profile.name}** [${riskBadge}]
-**ID**: \`${profile.id}\` | **Status**: \`${profile.status.toUpperCase()}\` | **Joined**: ${profile.join_date}
-**Contact**: ${profile.phone} | ${profile.email}
-**Guardian**: ${profile.guardian_name || 'Not Listed'} (${profile.guardian_phone || 'N/A'})
+  const explanation = `### 🧑‍🎓 Student Dossier: **${student.name}** [${riskBadge}]
+**ID**: \`${sId}\` | **Contact**: ${student.phone} | ${student.email}
 
 ---
 
-📚 **Academic Enrollment & Schedule**:
-• **Course**: ${profile.course_name || 'N/A'} (\`${profile.course_code || 'CODE'}\`) — ${profile.duration_weeks || 16} Weeks
-• **Batch**: **${profile.batch_name || 'N/A'}** (${profile.mode?.toUpperCase() || 'HYBRID'})
-• **Timings**: \`${profile.days || 'Mon,Wed,Fri'}\` at \`${profile.start_time || '08:00'} - ${profile.end_time || '10:00'}\`
-• **Faculty**: **${profile.trainer_name || 'Assigned Faculty'}** (${profile.trainer_phone || ''})
-• **Allocated Room**: ${profile.room_name || 'Lab Alpha'}
+📚 **Academic Enrollment**:
+• **Course**: ${course?.name || 'N/A'} (\`${course?.code || 'N/A'}\`)
+• **Batch**: **${batch?.name || 'N/A'}** | **Faculty**: ${trainer?.name || 'N/A'}
+• **Timings**: \`${batch?.days || 'N/A'}\` at \`${batch?.start_time || 'N/A'} - ${batch?.end_time || 'N/A'}\`
+• **Room**: ${room?.name || 'N/A'}
 
 ---
 
-📊 **Attendance & Class Activity**:
-• Overall Attendance: **${attPct}%** (${att.present_sessions} Present, ${att.late_sessions} Late, **${att.absent_sessions} Absent** out of ${att.total_sessions} sessions)
-• Assignments Submitted: **${academics.submitted_count}**${academics.avg_marks ? ` (Avg Score: **${academics.avg_marks}/100**)` : ''}${feeSection}
+📊 **Attendance**: **${attPct}%** (${presentSessions} Present, **${absentSessions} Absent** / ${totalSessions} total)${feeSection}
 
 ---
 
 ⚡ **Quick Actions**:
-• 📄 **[Download Official Certificate PDF](/api/certificates/generate?studentId=${profile.id})**
-• 💬 **Retention Action**: ${action ? 'WhatsApp follow-up draft created for approval in Outbox.' : 'Student attendance & standing are in good order.'}`;
+• 📄 **[Download Certificate PDF](/api/certificates/generate?studentId=${sId})**
+• 💬 **Retention Action**: ${action ? 'WhatsApp follow-up draft created for approval in Outbox.' : 'Student standing is in good order.'}`;
 
-  // Safe SQL to show in the Copilot Code Inspector tab
-  const sql = `SELECT 
-  s.id, s.name, s.phone, s.email, s.status, s.join_date,
-  b.name as batch_name, b.days, b.start_time, b.end_time, b.mode,
-  c.name as course_name,
-  t.name as trainer_name,
-  r.name as room_name,
-  (SELECT COUNT(*) FROM attendance WHERE student_id = s.id AND status = 'present') as present_count,
-  (SELECT COUNT(*) FROM attendance WHERE student_id = s.id AND status = 'absent') as absent_count
+  const sql = `SELECT s.id, s.name, s.phone, s.email, s.status, b.name as batch_name, c.name as course_name
 FROM students s
 LEFT JOIN enrollments en ON en.student_id = s.id
 LEFT JOIN batches b ON b.id = en.batch_id
 LEFT JOIN courses c ON c.id = b.course_id
-LEFT JOIN trainers t ON t.id = b.trainer_id
-LEFT JOIN rooms r ON r.id = b.room_id
-WHERE s.id = '${profile.id}'`;
+WHERE s.id = '${sId}'`;
+
+  return { sql, explanation, action };
+}
+
+async function buildMultipleStudentsResponse(students: any[]) {
+  const summaryRows = students.slice(0, 8).map(s =>
+    `• **${s.name}** (\`${s.id}\`) — ${s.phone}`
+  ).join('\n');
+
+  const studentIds = students.slice(0, 8).map(s => `'${s.id}'`).join(',');
+  const sql = `SELECT s.id, s.name, s.phone, s.email
+FROM students s
+WHERE s.id IN (${studentIds})
+LIMIT 10`;
 
   return {
     sql,
-    explanation,
-    action
+    explanation: `### 🔍 Multiple Students Matched (${students.length} found)\n\nPlease specify which student:\n\n${summaryRows}\n\n---\n*Tip: Use exact full name or ID (e.g. \`s_001\`) for full details.*`,
+    action: null
   };
 }
 
 function getMockResponse(question: string, role: UserRole) {
-  // 1. Block financial queries for trainer role
   if (role === 'trainer' && /fee|emi|payment|amount|installment/i.test(question)) {
     return {
       sql: null,
       explanation: null,
       blocked: true,
-      blockedReason: `🛡️ **RBAC Policy Block — Trainer Role**\n\nAs a Trainer, your session is strictly limited to pedagogical data (batches, attendance, assignments, recordings). Financial tables (fee_plans, emi_installments, payments) are never included in the Copilot prompt context for your role.\n\nThis block was intentional per InstiPilot Zero-Trust RBAC design. The SQL validator would also reject any attempt to query these tables directly.`
+      blockedReason: `🛡️ **RBAC Policy Block — Trainer Role**\n\nFinancial tables are never accessible to Trainer sessions per InstiPilot Zero-Trust RBAC design.`
     };
   }
 
-  // 2. Check if query is about a specific student by name, ID, or phone!
-  const matchedStudent = findStudentByQuery(question);
-  if (matchedStudent) {
-    if (matchedStudent.type === 'single' && matchedStudent.student) {
-      return buildStudentResponse(matchedStudent.student, role);
-    } else if (matchedStudent.type === 'multiple' && matchedStudent.students) {
-      return buildMultipleStudentsResponse(matchedStudent.students, role);
-    }
-  }
-
-  // 3. Match predefined operation patterns
   for (const mock of MOCK_RESPONSES) {
     if (mock.pattern.test(question)) {
       return mock.response;
     }
   }
 
-  // 4. Default fallback
   return {
     sql: `SELECT s.name, s.phone, s.status, s.join_date, b.name as batch_name
 FROM students s
@@ -450,14 +318,11 @@ LEFT JOIN batches b ON b.id = en.batch_id
 WHERE s.status = 'active'
 ORDER BY s.join_date DESC
 LIMIT 10`,
-    explanation: `I analyzed your question and fetched the 10 most recently enrolled active students. For more specific queries (attendance patterns, EMI status, timetable clashes, or a specific student's full details by name), try typing the student's name (e.g. *Aarav Gupta*, *Rohan Gupta*) or batch name.`,
+    explanation: `I analyzed your question and fetched the 10 most recently enrolled active students. For more specific queries, try typing a student's name, batch name, or ask about attendance/EMI status.`,
     action: null
   };
 }
 
-// ─────────────────────────────────────────────
-// Gemini API Integration
-// ─────────────────────────────────────────────
 async function callGeminiAPI(prompt: string): Promise<any> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('No API key');
@@ -469,7 +334,6 @@ async function callGeminiAPI(prompt: string): Promise<any> {
   const result = await model.generateContent(prompt);
   const text = result.response.text();
 
-  // Parse JSON from response
   const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
     return JSON.parse(jsonMatch[1] || jsonMatch[0]);
@@ -477,9 +341,6 @@ async function callGeminiAPI(prompt: string): Promise<any> {
   throw new Error('Could not parse JSON from LLM response');
 }
 
-// ─────────────────────────────────────────────
-// Build Schema-Filtered System Prompt for Role
-// ─────────────────────────────────────────────
 function buildRoleAwarePrompt(question: string, role: UserRole): string {
   const config = ROLE_PERMISSIONS[role];
   const allowedTables = config.allowedTables;
@@ -488,20 +349,18 @@ function buildRoleAwarePrompt(question: string, role: UserRole): string {
     users: `users(id, name, email, role)`,
     students: `students(id, name, email, phone, guardian_name, guardian_phone, city, college, join_date, status)`,
     courses: `courses(id, code, name, description, duration_weeks, total_fee)`,
-    batches: `batches(id, course_id, trainer_id, room_id, name, days, start_time, end_time, mode, online_seat_limit, max_seats, status, start_date, end_date)`,
-    trainers: `trainers(id, user_id, name, email, phone, specializations, availability)`,
-    rooms: `rooms(id, name, capacity, type, equipment)`,
-    enrollments: `enrollments(id, student_id, batch_id, enrolled_at, preferred_mode, status)`,
-    fee_plans: `fee_plans(id, student_id, course_id, total_amount, down_payment, num_installments, discount)`,
-    emi_installments: `emi_installments(id, fee_plan_id, student_id, installment_no, due_date, amount, status, paid_date)`,
-    payments: `payments(id, emi_id, student_id, source, reference, amount, date, notes, status)`,
-    attendance: `attendance(id, student_id, batch_id, date, mode, check_in_time, status, ip_or_location)`,
-    assignments: `assignments(id, batch_id, title, description, due_date, max_marks)`,
-    submissions: `submissions(id, assignment_id, student_id, submitted_at, status, marks, feedback)`,
-    recordings: `recordings(id, batch_id, title, url, date, duration_minutes, topic_tags, views_count)`,
-    timetable_slots: `timetable_slots(id, batch_id, trainer_id, room_id, day_of_week, start_time, end_time, is_active)`,
-    messages_outbox: `messages_outbox(id, student_id, recipient_phone, recipient_name, channel, message_text, draft_reason, status, created_by_role)`,
-    audit_log: `audit_log(id, user_id, user_name, role, action, query, result_summary, status, timestamp)`
+    batches: `batches(id, course_id, trainer_id, room_id, name, days, start_time, end_time, mode, status)`,
+    trainers: `trainers(id, user_id, name, email, phone, specializations)`,
+    rooms: `rooms(id, name, capacity, type)`,
+    enrollments: `enrollments(id, student_id, batch_id, preferred_mode, status)`,
+    fee_plans: `fee_plans(id, student_id, course_id, total_amount, down_payment, num_installments)`,
+    emi_installments: `emi_installments(id, fee_plan_id, student_id, installment_no, due_date, amount, status)`,
+    payments: `payments(id, emi_id, student_id, source, reference, amount, date, status)`,
+    attendance: `attendance(id, student_id, batch_id, date, mode, status)`,
+    recordings: `recordings(id, batch_id, title, url, date, duration_minutes, topic_tags)`,
+    timetable_slots: `timetable_slots(id, batch_id, trainer_id, room_id, day_of_week, start_time, end_time)`,
+    messages_outbox: `messages_outbox(id, student_id, recipient_phone, recipient_name, message_text, status)`,
+    audit_log: `audit_log(id, user_id, user_name, role, action, query, result_summary, status)`
   };
 
   const roleSchema = allowedTables
@@ -512,29 +371,24 @@ function buildRoleAwarePrompt(question: string, role: UserRole): string {
   return `You are InstiPilot AI Copilot — a read-only SQL analytics assistant for an Indian training institute. 
 
 ROLE: ${role} (${config.displayName})
-FORBIDDEN TABLES (never use): ${config.forbiddenTables.join(', ') || 'none'}
+FORBIDDEN TABLES: ${config.forbiddenTables.join(', ') || 'none'}
 
-ALLOWED DATABASE SCHEMA FOR THIS ROLE:
+ALLOWED DATABASE SCHEMA:
 ${roleSchema}
 
 RULES:
-1. Generate ONLY a single SELECT statement. No INSERT/UPDATE/DELETE/DROP/ALTER/PRAGMA.
+1. Generate ONLY a single SELECT statement. No INSERT/UPDATE/DELETE/DROP/ALTER.
 2. No SQL comments (-- or /* */).
 3. Only use tables from the allowed schema above.
 4. Always include a LIMIT clause (max 50 rows).
-5. If the question asks for WhatsApp messages or reminders, include an 'action' field in JSON.
-6. If the question is about financial data and role is 'trainer' or 'counselor', return blocked=true.
 
 QUESTION: ${question}
 
-Return ONLY valid JSON (no markdown, no explanation outside JSON):
+Return ONLY valid JSON:
 {
   "sql": "SELECT ... LIMIT 50",
-  "explanation": "Plain English summary of results (2-4 sentences, use markdown)",
-  "action": null or {
-    "type": "whatsapp_draft",
-    "items": [{"studentId": "...", "recipientName": "...", "recipientPhone": "...", "messageText": "...", "reason": "..."}]
-  }
+  "explanation": "Plain English summary (2-4 sentences, use markdown)",
+  "action": null
 }`;
 }
 
@@ -554,40 +408,44 @@ export async function POST(req: NextRequest) {
     const useMock = process.env.MOCK_LLM === 'true' || !process.env.GEMINI_API_KEY;
     let llmResponse: any;
 
-    // 0. Priority Student Dossier Matching & Strict Student Role Isolation
+    // Enforce student isolation
     if (user.role === 'student') {
       const studentId = user.studentId || 's_001';
-      const studentMatch = findStudentByQuery(question);
+      const studentMatch = await findStudentByQuery(question);
       if (studentMatch) {
         const targetStudent = studentMatch.type === 'single' ? studentMatch.student : studentMatch.students?.[0];
         if (targetStudent && targetStudent.id !== studentId) {
           return NextResponse.json({
             blocked: true,
-            blockedReason: `🛡️ **Access Denied (RBAC Policy Enforcement)**\n\nAs an enrolled student (${user.name}), you are restricted to viewing only your own personal records.\n\nQuerying other students' private records (${targetStudent.name}) is strictly blocked.`,
-            explanation: `🛡️ **Access Denied (RBAC Policy Enforcement)**\n\nAs an enrolled student (${user.name}), you are restricted to viewing only your own personal records.\n\nQuerying other students' private records is strictly blocked.`
+            blockedReason: `🛡️ **Access Denied**\n\nAs a student, you can only view your own records.`,
+            explanation: `🛡️ **Access Denied**\n\nAs a student, you can only view your own records.`
           });
         }
       }
 
-      const db = getDb();
-      const meStudent = db.prepare('SELECT id, name, phone, email FROM students WHERE id = ?').get(studentId) as any;
-      if (meStudent) {
-        llmResponse = buildStudentResponse(meStudent, 'student');
+      // Build student's own dossier
+      if (isSupabaseConfigured()) {
+        const client = getSupabase();
+        if (client) {
+          const { data: meStudent } = await client.from('students').select('id, name, phone, email').eq('id', studentId).single();
+          if (meStudent) {
+            llmResponse = await buildStudentResponse(meStudent, 'student');
+          }
+        }
       }
     } else {
-      const studentMatch = findStudentByQuery(question);
+      const studentMatch = await findStudentByQuery(question);
       if (studentMatch) {
         if (studentMatch.type === 'single' && studentMatch.student) {
-          llmResponse = buildStudentResponse(studentMatch.student, user.role);
+          llmResponse = await buildStudentResponse(studentMatch.student, user.role);
         } else if (studentMatch.type === 'multiple' && studentMatch.students) {
-          llmResponse = buildMultipleStudentsResponse(studentMatch.students, user.role);
+          llmResponse = await buildMultipleStudentsResponse(studentMatch.students);
         }
       }
     }
 
     if (!llmResponse) {
       if (useMock) {
-        // Use intelligent rule-based mock responses
         llmResponse = getMockResponse(question, user.role);
       } else {
         try {
@@ -600,19 +458,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // If mock/LLM returned a blocked response
-    if (llmResponse.blocked) {
-      // Log blocked attempt
-      const db = getDb();
-      db.prepare(`
-        INSERT INTO audit_log (id, user_id, user_name, role, action, query, result_summary, status)
-        VALUES (?, ?, ?, ?, 'copilot_blocked', ?, ?, 'blocked')
-      `).run(
-        `aud_blk_${Date.now()}`,
-        user.id, user.name, user.role,
-        question,
-        llmResponse.blockedReason || 'Role-based access denied'
-      );
+    if (llmResponse?.blocked) {
+      // Log blocked attempt to Supabase
+      if (isSupabaseConfigured()) {
+        await upsertToSupabase('audit_log', {
+          id: `aud_blk_${Date.now()}`,
+          user_id: user.id,
+          user_name: user.name,
+          role: user.role,
+          action: 'copilot_blocked',
+          query: question,
+          result_summary: llmResponse.blockedReason || 'Role-based access denied',
+          status: 'blocked'
+        }).catch(() => {});
+      }
 
       return NextResponse.json({
         blocked: true,
@@ -622,7 +481,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate and execute the SQL
-    const sqlResult = llmResponse.sql
+    const sqlResult = llmResponse?.sql
       ? await executeSafeQuery(llmResponse.sql, user, question)
       : null;
 
@@ -635,36 +494,40 @@ export async function POST(req: NextRequest) {
     }
 
     // Save draft messages to outbox if action present
-    if (llmResponse.action?.items?.length > 0) {
-      const db = getDb();
-      for (const item of llmResponse.action.items) {
-        const existingDraft = db.prepare(
-          `SELECT id FROM messages_outbox WHERE student_id = ? AND status = 'draft' LIMIT 1`
-        ).get(item.studentId) as any;
+    if (llmResponse?.action?.items?.length > 0 && isSupabaseConfigured()) {
+      const client = getSupabase();
+      if (client) {
+        for (const item of llmResponse.action.items) {
+          const { data: existingDraft } = await client
+            .from('messages_outbox')
+            .select('id')
+            .eq('student_id', item.studentId)
+            .eq('status', 'draft')
+            .limit(1);
 
-        if (!existingDraft) {
-          db.prepare(`
-            INSERT INTO messages_outbox (id, student_id, recipient_phone, recipient_name, channel, message_text, draft_reason, status, created_by_role)
-            VALUES (?, ?, ?, ?, 'whatsapp', ?, ?, 'draft', ?)
-          `).run(
-            `msg_ai_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-            item.studentId,
-            item.recipientPhone,
-            item.recipientName,
-            item.messageText,
-            item.reason,
-            user.role
-          );
+          if (!existingDraft || existingDraft.length === 0) {
+            await upsertToSupabase('messages_outbox', {
+              id: `msg_ai_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+              student_id: item.studentId,
+              recipient_phone: item.recipientPhone,
+              recipient_name: item.recipientName,
+              channel: 'whatsapp',
+              message_text: item.messageText,
+              draft_reason: item.reason,
+              status: 'draft',
+              created_by_role: user.role
+            }).catch(() => {});
+          }
         }
       }
     }
 
     return NextResponse.json({
-      sql: sqlResult?.executedSql || llmResponse.sql,
-      explanation: llmResponse.explanation,
+      sql: sqlResult?.executedSql || llmResponse?.sql,
+      explanation: llmResponse?.explanation,
       data: sqlResult?.data || [],
       rowCount: sqlResult?.rowCount || 0,
-      actionPreview: llmResponse.action,
+      actionPreview: llmResponse?.action,
       executionTimeMs: sqlResult?.executionTimeMs,
       usedMock: useMock
     });

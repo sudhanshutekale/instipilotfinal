@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/rbac/auth';
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,23 +11,37 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden: Audit Log is restricted to Owner/Director role only.' }, { status: 403 });
     }
 
-    const db = getDb();
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Database not configured.' }, { status: 500 });
+    }
+
+    const client = getSupabase();
+    if (!client) {
+      return NextResponse.json({ error: 'Database client unavailable.' }, { status: 500 });
+    }
+
     const searchParams = req.nextUrl.searchParams;
     const role = searchParams.get('role') || '';
     const action = searchParams.get('action') || '';
     const status = searchParams.get('status') || '';
 
-    let query = `SELECT * FROM audit_log WHERE 1=1`;
-    const params: string[] = [];
+    let query = client
+      .from('audit_log')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(100);
 
-    if (role) { query += ` AND role = ?`; params.push(role); }
-    if (action) { query += ` AND action = ?`; params.push(action); }
-    if (status) { query += ` AND status = ?`; params.push(status); }
+    if (role) query = query.eq('role', role);
+    if (action) query = query.eq('action', action);
+    if (status) query = query.eq('status', status);
 
-    query += ` ORDER BY timestamp DESC LIMIT 100`;
+    const { data: logs, error } = await query;
 
-    const logs = db.prepare(query).all(...params);
-    return NextResponse.json({ logs });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ logs: logs || [] });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
