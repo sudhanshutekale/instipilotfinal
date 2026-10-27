@@ -9,7 +9,12 @@ let _supabaseClient: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  let supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  // Filter out dummy/placeholder values
+  if (supabaseKey && (supabaseKey.includes('your_') || supabaseKey.startsWith('@') || supabaseKey.includes('placeholder'))) {
+    supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  }
 
   if (!supabaseKey || !supabaseUrl) return null;
   if (!_supabaseClient) {
@@ -26,7 +31,7 @@ export function getSupabase(): SupabaseClient | null {
 export const isSupabaseConfigured = (): boolean => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  return Boolean(supabaseUrl && supabaseKey);
+  return Boolean(supabaseUrl && supabaseKey && !supabaseKey.includes('your_') && !supabaseKey.startsWith('@'));
 };
 
 export async function upsertToSupabase(table: string, data: any | any[]) {
