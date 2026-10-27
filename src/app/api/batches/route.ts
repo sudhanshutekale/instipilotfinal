@@ -9,9 +9,12 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const user = await getSessionUser();
+    const searchParams = req.nextUrl.searchParams;
+    const statusFilter = searchParams.get('status') || '';
+    const activeOnly = searchParams.get('activeOnly') === 'true';
 
     if (!isSupabaseConfigured()) {
       return NextResponse.json({ error: 'Database not configured.' }, { status: 500 });
@@ -22,17 +25,28 @@ export async function GET() {
       return NextResponse.json({ error: 'Database client unavailable.' }, { status: 500 });
     }
 
+    let batchQuery = client.from('batches').select(`
+      *,
+      courses ( id, name, code, duration_weeks ),
+      trainers ( id, name, phone, email ),
+      rooms ( id, name, capacity ),
+      enrollments ( id )
+    `);
+
+    // Apply status filter
+    if (activeOnly) {
+      batchQuery = batchQuery.eq('status', 'ongoing');
+    } else if (statusFilter) {
+      batchQuery = batchQuery.eq('status', statusFilter);
+    }
+
+    batchQuery = batchQuery.order('start_time', { ascending: true });
+
     const [coursesRes, trainersRes, roomsRes, batchesRes] = await Promise.all([
       client.from('courses').select('id, name, code'),
       client.from('trainers').select('id, name, specializations, email'),
       client.from('rooms').select('id, name, capacity'),
-      client.from('batches').select(`
-        *,
-        courses ( id, name, code, duration_weeks ),
-        trainers ( id, name, phone, email ),
-        rooms ( id, name, capacity ),
-        enrollments ( id )
-      `).order('start_time', { ascending: true })
+      batchQuery
     ]);
 
     let batchList = (batchesRes.data || []).map((b: any) => ({

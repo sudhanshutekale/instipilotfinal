@@ -13,12 +13,27 @@ import {
   CheckCircle, 
   AlertTriangle,
   X,
-  Sparkles
+  Sparkles,
+  Filter,
+  PlayCircle,
+  PauseCircle,
+  Archive,
+  Hourglass
 } from 'lucide-react';
+
+type StatusKey = 'all' | 'ongoing' | 'upcoming' | 'completed' | 'paused';
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; dotColor: string }> = {
+  ongoing:   { label: 'Ongoing',   color: 'text-emerald-400', bg: 'bg-emerald-950/70', border: 'border-emerald-500/40', dotColor: 'bg-emerald-400' },
+  upcoming:  { label: 'Upcoming',  color: 'text-cyan-400',    bg: 'bg-cyan-950/70',    border: 'border-cyan-500/40',    dotColor: 'bg-cyan-400' },
+  completed: { label: 'Completed', color: 'text-slate-400',   bg: 'bg-slate-800/70',   border: 'border-slate-600/40',   dotColor: 'bg-slate-400' },
+  paused:    { label: 'Paused',    color: 'text-amber-400',   bg: 'bg-amber-950/70',   border: 'border-amber-500/40',   dotColor: 'bg-amber-400' },
+};
 
 export default function BatchesPage() {
   const [data, setData] = useState<any>({ batches: [], courses: [], trainers: [], rooms: [] });
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<StatusKey>('ongoing');
   const [showAddModal, setShowAddModal] = useState(false);
   const [clashNotification, setClashNotification] = useState<string | null>(null);
 
@@ -36,6 +51,7 @@ export default function BatchesPage() {
   });
   const [creating, setCreating] = useState(false);
 
+  // Fetch ALL batches (unfiltered) so we can do client-side tab switching instantly
   const fetchBatches = async () => {
     try {
       const res = await fetch('/api/batches');
@@ -52,6 +68,12 @@ export default function BatchesPage() {
 
   useEffect(() => {
     fetchBatches();
+    // Check if navigated here with ?status=ongoing from dashboard KPI click
+    const params = new URLSearchParams(window.location.search);
+    const urlStatus = params.get('status') as StatusKey | null;
+    if (urlStatus && ['all', 'ongoing', 'upcoming', 'completed', 'paused'].includes(urlStatus)) {
+      setActiveFilter(urlStatus);
+    }
   }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -81,6 +103,29 @@ export default function BatchesPage() {
     }
   };
 
+  const allBatches: any[] = data.batches || [];
+
+  // Build tab counts
+  const counts = {
+    all:       allBatches.length,
+    ongoing:   allBatches.filter((b: any) => b.status === 'ongoing').length,
+    upcoming:  allBatches.filter((b: any) => b.status === 'upcoming').length,
+    completed: allBatches.filter((b: any) => b.status === 'completed').length,
+    paused:    allBatches.filter((b: any) => b.status === 'paused').length,
+  };
+
+  const filteredBatches = activeFilter === 'all'
+    ? allBatches
+    : allBatches.filter((b: any) => b.status === activeFilter);
+
+  const TABS: { key: StatusKey; label: string; icon: any }[] = [
+    { key: 'all',       label: 'All Batches',  icon: Layers },
+    { key: 'ongoing',   label: 'Active / Ongoing', icon: PlayCircle },
+    { key: 'upcoming',  label: 'Upcoming',     icon: Hourglass },
+    { key: 'completed', label: 'Completed',    icon: Archive },
+    { key: 'paused',    label: 'Paused',       icon: PauseCircle },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -92,13 +137,16 @@ export default function BatchesPage() {
             </span>
           </div>
           <h2 className="font-display text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            Active Batches & Cohorts
+            Batches & Cohorts
+            <span className="text-xs font-mono font-normal px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/40">
+              {counts.ongoing} Active
+            </span>
             <span className="text-xs font-mono font-normal px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-              {data.batches.length} Batches
+              {counts.all} Total
             </span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Monitor room capacity constraints, hybrid online limits, and instructor assignments.
+            Monitor room capacity, hybrid limits, and instructor assignments across all cohorts.
           </p>
         </div>
 
@@ -111,7 +159,7 @@ export default function BatchesPage() {
         </button>
       </div>
 
-      {/* Clash Notification Banner if triggered */}
+      {/* Clash Notification Banner */}
       {clashNotification && (
         <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-950/30 flex items-start justify-between gap-3 text-xs text-amber-200">
           <div className="flex items-start gap-2.5">
@@ -130,34 +178,88 @@ export default function BatchesPage() {
         </div>
       )}
 
+      {/* Status Filter Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
+        {TABS.map(({ key, label, icon: Icon }) => {
+          const isActive = activeFilter === key;
+          const count = counts[key];
+          // Don't show tab if count is 0 (except 'all')
+          if (key !== 'all' && count === 0) return null;
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveFilter(key)}
+              className={`py-2 px-3.5 rounded-xl flex items-center gap-2 text-xs font-mono transition-all border ${
+                isActive
+                  ? key === 'ongoing'
+                    ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300 font-semibold shadow-sm'
+                    : key === 'upcoming'
+                    ? 'bg-cyan-950/60 border-cyan-500/50 text-cyan-300 font-semibold shadow-sm'
+                    : key === 'completed'
+                    ? 'bg-slate-700/60 border-slate-500/50 text-slate-200 font-semibold shadow-sm'
+                    : key === 'paused'
+                    ? 'bg-amber-950/60 border-amber-500/50 text-amber-300 font-semibold shadow-sm'
+                    : 'bg-violet-950/60 border-violet-500/50 text-violet-300 font-semibold shadow-sm'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{label}</span>
+              <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                isActive ? 'bg-white/10 text-white' : 'bg-slate-800 text-slate-400'
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Batches Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
           [1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="h-48 rounded-2xl bg-slate-900/80 border border-slate-800 animate-pulse"></div>
+            <div key={i} className="h-52 rounded-2xl bg-slate-900/80 border border-slate-800 animate-pulse"></div>
           ))
+        ) : filteredBatches.length === 0 ? (
+          <div className="col-span-full py-16 text-center">
+            <Layers className="w-10 h-10 text-slate-700 mx-auto mb-3" />
+            <p className="text-slate-500 text-sm font-mono">
+              No {activeFilter === 'all' ? '' : activeFilter} batches found.
+            </p>
+          </div>
         ) : (
-          data.batches.map((b: any) => {
-            const occupancyPct = Math.round((b.enrolled_students / b.max_seats) * 100);
+          filteredBatches.map((b: any) => {
+            const occupancyPct = b.max_seats > 0 ? Math.round((b.enrolled_students / b.max_seats) * 100) : 0;
+            const statusCfg = STATUS_CONFIG[b.status] || STATUS_CONFIG['upcoming'];
             return (
               <div
                 key={b.id}
                 className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl hover:border-slate-700 transition-all flex flex-col justify-between group"
               >
                 <div>
+                  {/* Top row: days + status badge */}
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                       {b.days}
                     </span>
-                    <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded ${
-                      b.mode === 'hybrid'
-                        ? 'bg-cyan-950 text-cyan-400 border border-cyan-500/30'
-                        : b.mode === 'online'
-                        ? 'bg-violet-950 text-violet-400 border border-violet-500/30'
-                        : 'bg-emerald-950 text-emerald-400 border border-emerald-500/30'
-                    }`}>
-                      {b.mode}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {/* Status badge */}
+                      <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded flex items-center gap-1 ${statusCfg.bg} ${statusCfg.color} border ${statusCfg.border}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dotColor} ${b.status === 'ongoing' ? 'animate-pulse' : ''}`}></span>
+                        {statusCfg.label}
+                      </span>
+                      {/* Mode badge */}
+                      <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded ${
+                        b.mode === 'hybrid'
+                          ? 'bg-cyan-950 text-cyan-400 border border-cyan-500/30'
+                          : b.mode === 'online'
+                          ? 'bg-violet-950 text-violet-400 border border-violet-500/30'
+                          : 'bg-emerald-950 text-emerald-400 border border-emerald-500/30'
+                      }`}>
+                        {b.mode}
+                      </span>
+                    </div>
                   </div>
 
                   <h3 className="font-display font-bold text-base text-white group-hover:text-cyan-300 transition-colors mb-1">
@@ -187,12 +289,16 @@ export default function BatchesPage() {
                   <div className="space-y-1 pt-2 border-t border-slate-800/80">
                     <div className="flex justify-between text-[11px] font-mono">
                       <span className="text-slate-400">Occupancy</span>
-                      <span className="text-white font-semibold">{b.enrolled_students} / {b.max_seats} ({occupancyPct}%)</span>
+                      <span className={`font-semibold ${
+                        occupancyPct >= 90 ? 'text-amber-400' : occupancyPct >= 70 ? 'text-cyan-300' : 'text-white'
+                      }`}>
+                        {b.enrolled_students} / {b.max_seats} ({occupancyPct}%)
+                      </span>
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
                       <div
                         className={`h-full rounded-full ${
-                          occupancyPct > 90 ? 'bg-amber-400' : 'bg-gradient-to-r from-cyan-400 to-violet-500'
+                          occupancyPct >= 90 ? 'bg-amber-400' : 'bg-gradient-to-r from-cyan-400 to-violet-500'
                         }`}
                         style={{ width: `${Math.min(occupancyPct, 100)}%` }}
                       ></div>
@@ -205,7 +311,7 @@ export default function BatchesPage() {
                     href={`/attendance?batchId=${b.id}`}
                     className="text-cyan-400 hover:text-cyan-300 text-[11px] font-medium"
                   >
-                    Attendance Logs &rarr;
+                    Attendance &rarr;
                   </Link>
                   <Link
                     href={`/recordings?batchId=${b.id}`}

@@ -178,7 +178,7 @@ export default function DashboardPage() {
         </div>
 
         {/* KPI 2: Ongoing Batches */}
-        <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-violet-500/40 transition-colors">
+        <Link href="/batches?status=ongoing" className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-violet-500/40 transition-colors block">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-medium uppercase font-mono tracking-wider">Active Batches</span>
             <div className="p-2 rounded-xl bg-violet-950/60 text-violet-400 border border-violet-500/20">
@@ -188,10 +188,11 @@ export default function DashboardPage() {
           <div className="font-display text-3xl font-bold text-white mb-1">
             {kpis?.activeBatches ?? '—'}
           </div>
-          <div className="text-[11px] text-violet-300 font-mono">
-            Across 5 physical & virtual labs
+          <div className="text-[11px] text-violet-300 font-mono flex items-center gap-1">
+            <span>Across 5 physical & virtual labs</span>
+            <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-        </div>
+        </Link>
 
         {/* KPI 3: Attendance Rate */}
         <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-emerald-500/40 transition-colors">
