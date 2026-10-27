@@ -22,13 +22,18 @@ export async function getSessionUser(): Promise<AuthUser> {
       const parsed = JSON.parse(decoded) as AuthUser;
       if (parsed && parsed.role && DEMO_USERS[parsed.role]) {
         const demo = DEMO_USERS[parsed.role];
+        let name = parsed.name && parsed.name.trim().length > 0 ? parsed.name : demo.name;
+        // Purge any stale "System Bot" from cookies
+        if (name.toLowerCase().includes('system bot') || name.toLowerCase().includes('bot') || parsed.id === 'system') {
+          name = parsed.role === 'owner' ? 'Priya Sharma (Director)' : demo.name;
+        }
         return {
-          id: parsed.id || `u_${parsed.role}`,
-          name: parsed.name && parsed.name.trim().length > 0 ? parsed.name : demo.name,
-          email: parsed.email || demo.email,
+          id: parsed.id === 'system' ? (parsed.role === 'owner' ? 'u_owner' : `u_${parsed.role}`) : (parsed.id || `u_${parsed.role}`),
+          name,
+          email: parsed.id === 'system' ? demo.email : (parsed.email || demo.email),
           role: parsed.role,
           studentId: parsed.studentId || demo.studentId,
-          avatarUrl: parsed.avatarUrl || demo.avatar
+          avatarUrl: (parsed.avatarUrl && !parsed.id?.includes('system')) ? parsed.avatarUrl : demo.avatar
         };
       }
     } catch {
@@ -59,14 +64,29 @@ export async function authenticateDemoUser(role: UserRole): Promise<AuthUser> {
   if (isSupabaseConfigured()) {
     const client = getSupabase();
     if (client) {
-      const { data: user } = await client
+      // 1. Directly target official user ID (e.g. 'u_owner', 'u_trainer')
+      let { data: user } = await client
         .from('users')
         .select('id, name, email, role, avatar_url')
-        .eq('role', role)
-        .limit(1)
+        .eq('id', `u_${role}`)
         .maybeSingle();
 
-      if (user) {
+      // 2. If not found by ID, find by role strictly excluding system/bot accounts
+      if (!user) {
+        const { data: fallbackUser } = await client
+          .from('users')
+          .select('id, name, email, role, avatar_url')
+          .eq('role', role)
+          .neq('id', 'system')
+          .not('name', 'ilike', '%bot%')
+          .not('name', 'ilike', '%system%')
+          .order('id', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        user = fallbackUser;
+      }
+
+      if (user && user.name && !user.name.toLowerCase().includes('bot') && !user.name.toLowerCase().includes('system')) {
         return {
           id: user.id,
           name: user.name,

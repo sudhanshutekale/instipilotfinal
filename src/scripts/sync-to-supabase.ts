@@ -51,7 +51,7 @@ async function syncAll() {
   try {
     await postChunk('users', [{
       id: 'system',
-      name: 'System Bot',
+      name: 'System Background Worker',
       email: 'system@instipilot.internal',
       password_hash: 'system_lock',
       role: 'owner',

@@ -179,15 +179,19 @@ export default function Navbar({
             >
               <div className="relative">
                 <img
-                  src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
-                  alt={currentUser.name}
+                  src={(currentUser.avatarUrl && !currentUser.id?.includes('system') && !currentUser.name?.toLowerCase().includes('bot'))
+                    ? currentUser.avatarUrl
+                    : (currentUser.role === 'owner' ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100')}
+                  alt="User Profile"
                   className="w-8 h-8 rounded-lg object-cover border border-slate-700"
                 />
                 <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-command-darkest"></span>
               </div>
               <div className="hidden sm:flex flex-col text-left">
                 <span className="text-xs font-semibold text-slate-200 leading-tight">
-                  {currentUser.name || (currentUser.role === 'owner' ? 'Priya Sharma' : 'User')}
+                  {(!currentUser.name || currentUser.name.toLowerCase().includes('bot') || currentUser.name.toLowerCase().includes('system') || currentUser.id === 'system')
+                    ? (currentUser.role === 'owner' ? 'Priya Sharma (Director)' : 'Staff Member')
+                    : currentUser.name}
                 </span>
                 <span className="text-[11px] text-cyan-400 font-mono capitalize">
                   {roleConfig.displayName}

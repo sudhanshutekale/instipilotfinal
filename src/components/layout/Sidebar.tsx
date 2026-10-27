@@ -51,6 +51,14 @@ export default function Sidebar({ currentUser, onOpenCopilot, isMobileOpen, onCl
   const pathname = usePathname();
   const roleConfig = ROLE_PERMISSIONS[currentUser.role] || ROLE_PERMISSIONS.owner;
 
+  const isOwner = !currentUser.role || currentUser.role === 'owner';
+  const cleanUserName = (!currentUser.name || currentUser.name.toLowerCase().includes('bot') || currentUser.name.toLowerCase().includes('system') || currentUser.id === 'system')
+    ? (isOwner ? 'Priya Sharma (Director)' : 'Staff Member')
+    : currentUser.name;
+  const cleanUserAvatar = (currentUser.avatarUrl && !currentUser.id?.includes('system') && !currentUser.name?.toLowerCase().includes('bot'))
+    ? currentUser.avatarUrl
+    : (isOwner ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100');
+
   return (
     <>
       {/* Mobile Slide-over Drawer */}
@@ -142,13 +150,13 @@ export default function Sidebar({ currentUser, onOpenCopilot, isMobileOpen, onCl
             <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 space-y-2">
               <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-900/80 border border-slate-800">
                 <img
-                  src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'}
-                  alt={currentUser.name || 'Owner'}
+                  src={cleanUserAvatar}
+                  alt={cleanUserName}
                   className="w-8 h-8 rounded-lg object-cover border border-slate-700 flex-shrink-0"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-semibold text-white truncate">
-                    {currentUser.name || (currentUser.role === 'owner' ? 'Priya Sharma' : 'Staff Member')}
+                    {cleanUserName}
                   </div>
                   <div className="text-[10px] text-cyan-400 font-mono capitalize truncate">
                     {roleConfig.displayName}
@@ -229,13 +237,13 @@ export default function Sidebar({ currentUser, onOpenCopilot, isMobileOpen, onCl
       <div className="p-3 border-t border-slate-800/80 bg-slate-950/40 space-y-2">
         <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-900/80 border border-slate-800">
           <img
-            src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'}
-            alt={currentUser.name || 'Owner'}
+            src={cleanUserAvatar}
+            alt={cleanUserName}
             className="w-8 h-8 rounded-lg object-cover border border-slate-700 flex-shrink-0"
           />
           <div className="min-w-0 flex-1">
             <div className="text-xs font-semibold text-white truncate">
-              {currentUser.name || (currentUser.role === 'owner' ? 'Priya Sharma' : 'Staff Member')}
+              {cleanUserName}
             </div>
             <div className="text-[10px] text-cyan-400 font-mono capitalize truncate">
               {roleConfig.displayName}

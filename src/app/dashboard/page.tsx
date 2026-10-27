@@ -61,7 +61,15 @@ export default function DashboardPage() {
       const match = document.cookie.match(/instipilot_session=([^;]+)/);
       if (match && match[1]) {
         const parsed = JSON.parse(decodeURIComponent(match[1]));
-        if (parsed) setClientUser(parsed);
+        if (parsed) {
+          if (parsed.name?.toLowerCase().includes('bot') || parsed.name?.toLowerCase().includes('system') || parsed.id === 'system') {
+            parsed.name = 'Priya Sharma (Director)';
+            parsed.id = 'u_owner';
+            parsed.avatarUrl = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150';
+            document.cookie = `instipilot_session=${encodeURIComponent(JSON.stringify(parsed))}; path=/; max-age=604800; SameSite=Lax`;
+          }
+          setClientUser(parsed);
+        }
       }
     } catch {}
   }, []);
@@ -133,13 +141,21 @@ export default function DashboardPage() {
     );
   }
 
-  const user = data?.user || clientUser || {
-    name: 'Priya Sharma',
-    role: 'owner',
-    email: 'owner@instipilot.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
+  const rawUser = data?.user || clientUser;
+  const isOwner = !rawUser?.role || rawUser?.role === 'owner';
+  let cleanName = rawUser?.name;
+  if (!cleanName || cleanName.toLowerCase().includes('bot') || cleanName.toLowerCase().includes('system') || rawUser?.id === 'system') {
+    cleanName = isOwner ? 'Priya Sharma (Director)' : 'Staff Member';
+  }
+
+  const user = {
+    id: rawUser?.id === 'system' ? 'u_owner' : (rawUser?.id || 'u_owner'),
+    name: cleanName,
+    role: rawUser?.role || 'owner',
+    email: rawUser?.id === 'system' ? 'owner@instipilot.com' : (rawUser?.email || 'owner@instipilot.com'),
+    avatarUrl: (rawUser?.avatarUrl && !rawUser?.id?.includes('system')) ? rawUser.avatarUrl : 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
   };
-  const displayName = user?.name || (user?.role === 'owner' ? 'Priya Sharma' : 'Staff');
+  const displayName = user.name;
   const kpis = data?.kpis;
   const alerts = data?.alerts;
   const dualRiskStudents = alerts?.dualRiskStudents || [];

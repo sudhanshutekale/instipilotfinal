@@ -78,15 +78,18 @@ export async function GET() {
 
     const userRole = (user.role || 'owner') as UserRole;
     const demo = DEMO_USERS[userRole] || DEMO_USERS.owner;
-    const userName = (user.name && user.name.trim().length > 0) ? user.name : demo.name;
+    let userName = (user.name && user.name.trim().length > 0) ? user.name : demo.name;
+    if (userName.toLowerCase().includes('system bot') || userName.toLowerCase().includes('bot') || user.id === 'system') {
+      userName = userRole === 'owner' ? 'Priya Sharma (Director)' : demo.name;
+    }
 
     return NextResponse.json({
       user: {
-        id: user.id || `u_${userRole}`,
+        id: (user.id === 'system' ? (userRole === 'owner' ? 'u_owner' : `u_${userRole}`) : (user.id || `u_${userRole}`)),
         name: userName,
         role: userRole,
-        email: user.email || demo.email,
-        avatarUrl: user.avatarUrl || demo.avatar
+        email: user.id === 'system' ? demo.email : (user.email || demo.email),
+        avatarUrl: (user.avatarUrl && !user.id?.includes('system')) ? user.avatarUrl : demo.avatar
       },
       kpis: {
         activeStudents: studentCount,
