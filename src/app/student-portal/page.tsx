@@ -157,10 +157,10 @@ export default function StudentPortalPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-44 rounded-2xl bg-slate-900/80 border border-slate-800"></div>
+        <div className="h-44 rounded-2xl bg-white border border-slate-200/80 shadow-xs"></div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-28 rounded-2xl bg-slate-900/80 border border-slate-800"></div>
+            <div key={i} className="h-28 rounded-xl bg-white border border-slate-200/80 shadow-xs"></div>
           ))}
         </div>
       </div>
@@ -169,10 +169,10 @@ export default function StudentPortalPage() {
 
   if (error || !data) {
     return (
-      <div className="p-8 rounded-2xl border border-rose-500/40 bg-rose-950/20 text-center max-w-lg mx-auto space-y-3">
-        <AlertCircle className="w-10 h-10 text-rose-400 mx-auto" />
-        <h3 className="font-display text-lg font-bold text-white">Student Portal Access</h3>
-        <p className="text-xs text-rose-300/90 leading-relaxed">{error || 'Unable to retrieve student profile.'}</p>
+      <div className="p-8 rounded-2xl border border-rose-200 bg-rose-50 text-center max-w-lg mx-auto space-y-3">
+        <AlertCircle className="w-10 h-10 text-rose-600 mx-auto" />
+        <h3 className="text-lg font-bold text-rose-900">Student Portal Access</h3>
+        <p className="text-xs text-rose-700 leading-relaxed">{error || 'Unable to retrieve student profile.'}</p>
       </div>
     );
   }
@@ -185,49 +185,45 @@ export default function StudentPortalPage() {
   return (
     <div className="space-y-6">
       {/* 1. Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-cyan-950/40 via-slate-900 to-violet-950/40 p-6 sm:p-8 backdrop-blur-xl shadow-glass">
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start sm:items-center gap-4">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 shadow-neon-cyan flex-shrink-0">
-              <div className="w-full h-full rounded-2xl bg-slate-950 flex items-center justify-center overflow-hidden">
-                <GraduationCap className="w-10 h-10 text-cyan-400" />
-              </div>
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center flex-shrink-0 text-blue-600">
+              <GraduationCap className="w-9 h-9" />
             </div>
 
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-500/30 uppercase tracking-wider">
-                  STUDENT ID: {student.id}
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
+                  Student ID: {student.id}
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/30 uppercase">
-                  STATUS: {student.status}
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                  Status: {student.status}
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-violet-950 text-violet-300 border border-violet-500/30 uppercase">
-                  MODE: {enrollment?.preferred_mode || 'Hybrid'}
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                  Mode: {enrollment?.preferred_mode || 'Hybrid'}
                 </span>
               </div>
 
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                 Welcome back, {student.name}!
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1">
-                {enrollment?.course_name} &bull; <span className="text-cyan-400">{enrollment?.batch_name}</span>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                {enrollment?.course_name} &bull; <span className="text-blue-600 font-medium">{enrollment?.batch_name}</span>
               </p>
             </div>
           </div>
 
           {/* Quick Guardian & Contact Info */}
-          <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-3.5 text-xs font-mono space-y-1.5 min-w-[240px]">
-            <div className="text-[10px] uppercase text-slate-400 font-semibold flex items-center justify-between">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs space-y-1.5 min-w-[240px]">
+            <div className="text-[11px] uppercase text-slate-500 font-semibold flex items-center justify-between">
               <span>Academic Contact</span>
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
             </div>
-            <div className="text-slate-200">
-              Trainer: <span className="text-cyan-300">{enrollment?.trainer_name}</span>
+            <div className="text-slate-800">
+              Trainer: <span className="font-semibold text-blue-600">{enrollment?.trainer_name}</span>
             </div>
-            <div className="text-slate-400 text-[11px]">
+            <div className="text-slate-500 text-xs">
               Guardian: {student.guardian_name || 'Recorded on file'} ({student.guardian_phone || 'N/A'})
             </div>
           </div>
@@ -235,7 +231,7 @@ export default function StudentPortalPage() {
       </div>
 
       {/* 2. Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-xs font-mono overflow-x-auto whitespace-nowrap">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs overflow-x-auto whitespace-nowrap">
         {[
           { key: 'overview', label: 'Dashboard Overview', icon: BookOpen },
           { key: 'schedule', label: 'My Class Schedule', icon: CalendarClock },
@@ -250,13 +246,13 @@ export default function StudentPortalPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
-              className={`py-2 px-3.5 rounded-xl flex items-center gap-2 transition-all ${
+              className={`py-2 px-3.5 rounded-lg flex items-center gap-2 transition-all font-medium ${
                 isActive
-                  ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-300 border border-cyan-500/30 font-semibold shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200 font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-4 h-4" />
               <span>{tab.label}</span>
             </button>
           );
@@ -271,63 +267,63 @@ export default function StudentPortalPage() {
           {/* 4 Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Card 1: Attendance */}
-            <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl flex flex-col justify-between">
+            <div className="p-5 rounded-xl border border-slate-200/80 bg-white shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400">Attendance Rate</span>
-                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${isAttendanceGood ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' : 'bg-rose-950 text-rose-400 border border-rose-500/30'}`}>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Attendance Rate</span>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${isAttendanceGood ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
                   {isAttendanceGood ? 'Good Standing' : 'Risk Alert'}
                 </span>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="font-display text-3xl font-bold text-white">{attendance?.rate ?? 0}%</span>
-                <span className="text-xs text-slate-400 font-mono">({attendance?.present ?? 0}/{attendance?.totalSessions ?? 0} classes)</span>
+                <span className="text-3xl font-bold text-slate-900 tracking-tight">{attendance?.rate ?? 0}%</span>
+                <span className="text-xs text-slate-500 font-medium">({attendance?.present ?? 0}/{attendance?.totalSessions ?? 0} classes)</span>
               </div>
-              <div className="w-full h-1.5 rounded-full bg-slate-800 mt-3 overflow-hidden">
+              <div className="w-full h-2 rounded-full bg-slate-100 mt-3 overflow-hidden">
                 <div 
-                  className={`h-full rounded-full ${isAttendanceGood ? 'bg-emerald-400 shadow-neon-cyan' : 'bg-rose-400'}`}
+                  className={`h-full rounded-full ${isAttendanceGood ? 'bg-emerald-500' : 'bg-rose-500'}`}
                   style={{ width: `${attendance?.rate ?? 0}%` }}
                 />
               </div>
             </div>
 
             {/* Card 2: Batch Schedule */}
-            <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl flex flex-col justify-between">
+            <div className="p-5 rounded-xl border border-slate-200/80 bg-white shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400">Batch Timing</span>
-                <Clock className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Batch Timing</span>
+                <Clock className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <div className="font-display text-xl font-bold text-white">{enrollment?.days}</div>
-                <div className="text-xs text-cyan-300 font-mono mt-0.5">{enrollment?.start_time} - {enrollment?.end_time}</div>
+                <div className="text-xl font-bold text-slate-900">{enrollment?.days}</div>
+                <div className="text-xs text-blue-600 font-semibold mt-0.5">{enrollment?.start_time} - {enrollment?.end_time}</div>
               </div>
-              <div className="text-[11px] text-slate-400 truncate mt-2">
-                Room: <span className="text-slate-200">{enrollment?.room_name || 'Virtual Lab 1'}</span>
+              <div className="text-xs text-slate-500 truncate mt-2">
+                Room: <span className="text-slate-800 font-medium">{enrollment?.room_name || 'Virtual Lab 1'}</span>
               </div>
             </div>
 
             {/* Card 3: Fee Status */}
-            <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl flex flex-col justify-between">
+            <div className="p-5 rounded-xl border border-slate-200/80 bg-white shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400">Next Installment</span>
-                <CreditCard className="w-4 h-4 text-violet-400" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Next Installment</span>
+                <CreditCard className="w-4 h-4 text-slate-500" />
               </div>
               {pendingInstallment ? (
                 <div>
-                  <div className="font-display text-2xl font-bold text-white">₹{pendingInstallment.amount.toLocaleString('en-IN')}</div>
-                  <div className={`text-xs font-mono mt-0.5 ${pendingInstallment.status === 'overdue' ? 'text-rose-400' : 'text-amber-400'}`}>
+                  <div className="text-2xl font-bold text-slate-900">₹{pendingInstallment.amount.toLocaleString('en-IN')}</div>
+                  <div className={`text-xs font-medium mt-0.5 ${pendingInstallment.status === 'overdue' ? 'text-rose-600 font-semibold' : 'text-amber-600'}`}>
                     Due: {pendingInstallment.due_date} ({pendingInstallment.status.toUpperCase()})
                   </div>
                 </div>
               ) : (
                 <div>
-                  <div className="font-display text-xl font-bold text-emerald-400">All Settled</div>
-                  <div className="text-xs text-slate-400 font-mono mt-0.5">No pending EMIs</div>
+                  <div className="text-xl font-bold text-emerald-600">All Settled</div>
+                  <div className="text-xs text-slate-500 mt-0.5">No pending EMIs</div>
                 </div>
               )}
               {pendingInstallment && (
                 <button
                   onClick={() => setShowPayModal(pendingInstallment)}
-                  className="mt-2 py-1 px-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] font-medium transition-colors w-full text-center"
+                  className="mt-2.5 py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors w-full text-center shadow-xs"
                 >
                   Pay Installment Online &rarr;
                 </button>
@@ -335,19 +331,19 @@ export default function StudentPortalPage() {
             </div>
 
             {/* Card 4: Assignments */}
-            <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl flex flex-col justify-between">
+            <div className="p-5 rounded-xl border border-slate-200/80 bg-white shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400">Assignments</span>
-                <FileCode2 className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Assignments</span>
+                <FileCode2 className="w-4 h-4 text-emerald-600" />
               </div>
               <div>
-                <div className="font-display text-3xl font-bold text-white">
+                <div className="text-3xl font-bold text-slate-900 tracking-tight">
                   {(assignments || []).filter((a: any) => a.submission_id).length} / {(assignments || []).length}
                 </div>
-                <div className="text-xs text-slate-400 font-mono mt-0.5">Submissions Evaluated</div>
+                <div className="text-xs text-slate-500 font-medium mt-0.5">Submissions Evaluated</div>
               </div>
-              <div className="text-[11px] text-emerald-400 mt-2">
-                Course Completion on Track &bull; Active
+              <div className="text-xs text-emerald-600 font-semibold mt-2">
+                Course Progress On Track &bull; Active
               </div>
             </div>
           </div>
@@ -355,29 +351,29 @@ export default function StudentPortalPage() {
           {/* Quick Schedule Preview & Recent Recordings */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Weekly Classes */}
-            <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="p-5 rounded-xl border border-slate-200/80 bg-white shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-cyan-400" />
-                  <h3 className="font-display text-sm font-bold text-white">Weekly Class Schedule</h3>
+                  <Calendar className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900">Weekly Class Schedule</h3>
                 </div>
-                <button onClick={() => setActiveTab('schedule')} className="text-xs text-cyan-400 hover:underline">
+                <button onClick={() => setActiveTab('schedule')} className="text-xs text-blue-600 hover:underline font-medium">
                   View Full Timetable &rarr;
                 </button>
               </div>
 
               <div className="space-y-2.5">
                 {schedule?.slice(0, 3).map((slot: any) => (
-                  <div key={slot.id} className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between">
+                  <div key={slot.id} className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-cyan-300 px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/60">
+                        <span className="text-xs font-semibold text-blue-700 px-2 py-0.5 rounded bg-blue-50 border border-blue-200">
                           {slot.day}
                         </span>
-                        <span className="text-xs font-semibold text-slate-200">{slot.topic || enrollment?.batch_name}</span>
+                        <span className="text-xs font-semibold text-slate-800">{slot.topic || enrollment?.batch_name}</span>
                       </div>
-                      <div className="text-[11px] text-slate-400 font-mono mt-1 flex items-center gap-2">
-                        <Clock className="w-3 h-3 text-slate-500" />
+                      <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
                         <span>{slot.start_time} - {slot.end_time}</span>
                         <span>&bull;</span>
                         <span>{enrollment?.room_name || 'Room Alpha'}</span>
@@ -388,9 +384,9 @@ export default function StudentPortalPage() {
                       href="https://zoom.us"
                       target="_blank"
                       rel="noreferrer"
-                      className="py-1 px-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-[10px] font-medium shadow-sm hover:brightness-110 flex items-center gap-1"
+                      className="py-1 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-xs flex items-center gap-1 transition-colors"
                     >
-                      <Video className="w-3 h-3" />
+                      <Video className="w-3.5 h-3.5" />
                       Join Live
                     </a>
                   </div>
@@ -399,23 +395,23 @@ export default function StudentPortalPage() {
             </div>
 
             {/* Recent Video Lectures */}
-            <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="p-5 rounded-xl border border-slate-200/80 bg-white shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <Video className="w-4 h-4 text-violet-400" />
-                  <h3 className="font-display text-sm font-bold text-white">Latest Lecture Recordings</h3>
+                  <Video className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900">Latest Lecture Recordings</h3>
                 </div>
-                <button onClick={() => setActiveTab('recordings')} className="text-xs text-violet-400 hover:underline">
+                <button onClick={() => setActiveTab('recordings')} className="text-xs text-blue-600 hover:underline font-medium">
                   View All Recordings &rarr;
                 </button>
               </div>
 
               <div className="space-y-2.5">
                 {recordings?.slice(0, 3).map((rec: any) => (
-                  <div key={rec.id} className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between">
+                  <div key={rec.id} className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-semibold text-slate-200">{rec.title}</div>
-                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      <div className="text-xs font-semibold text-slate-900">{rec.title}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">
                         {rec.date} &bull; {rec.duration_minutes} mins &bull; {rec.views_count} views
                       </div>
                     </div>
@@ -424,10 +420,10 @@ export default function StudentPortalPage() {
                       href={rec.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="py-1 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[11px] font-mono flex items-center gap-1 transition-colors"
+                      className="py-1 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1 transition-colors"
                     >
                       <span>Watch</span>
-                      <ExternalLink className="w-3 h-3" />
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
                     </a>
                   </div>
                 ))}
@@ -439,17 +435,17 @@ export default function StudentPortalPage() {
 
       {/* TAB: SCHEDULE */}
       {activeTab === 'schedule' && (
-        <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="p-6 rounded-xl border border-slate-200/80 bg-white shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
-              <h3 className="font-display text-lg font-bold text-white">Weekly Academic Timetable</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h3 className="text-lg font-bold text-slate-900">Weekly Academic Timetable</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
                 Batch: {enrollment?.batch_name} &bull; Instructor: {enrollment?.trainer_name}
               </p>
             </div>
             <Link
               href="/timetable"
-              className="py-1.5 px-3 rounded-xl bg-slate-800 text-cyan-300 text-xs font-mono hover:bg-slate-700"
+              className="py-1.5 px-3.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium"
             >
               Interactive Schedule Grid &rarr;
             </Link>
@@ -457,19 +453,19 @@ export default function StudentPortalPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {schedule?.map((slot: any) => (
-              <div key={slot.id} className="p-4 rounded-xl border border-slate-800 bg-slate-950/70 space-y-2">
+              <div key={slot.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-cyan-400 px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-800">
+                  <span className="text-xs font-semibold text-blue-700 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200">
                     {slot.day}
                   </span>
-                  <span className="text-xs font-mono text-slate-400 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-slate-500" />
+                  <span className="text-xs text-slate-500 flex items-center gap-1 font-medium">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
                     {slot.start_time} - {slot.end_time}
                   </span>
                 </div>
-                <div className="font-semibold text-sm text-white pt-1">{slot.topic || enrollment?.course_name}</div>
-                <div className="text-xs text-slate-400 flex items-center gap-1.5 pt-1 border-t border-slate-800/80">
-                  <MapPin className="w-3 h-3 text-cyan-400" />
+                <div className="font-semibold text-sm text-slate-900 pt-1">{slot.topic || enrollment?.course_name}</div>
+                <div className="text-xs text-slate-500 flex items-center gap-1.5 pt-1 border-t border-slate-200">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
                   <span>{enrollment?.room_name || 'Computer Lab Alpha'}</span>
                 </div>
               </div>
@@ -480,19 +476,19 @@ export default function StudentPortalPage() {
 
       {/* TAB: ATTENDANCE */}
       {activeTab === 'attendance' && (
-        <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+        <div className="p-6 rounded-xl border border-slate-200/80 bg-white shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-              <h3 className="font-display text-lg font-bold text-white">Biometric & Join Attendance History</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Official check-in logs recorded via institute biometric sensors and Zoom SDK join events.
+              <h3 className="text-lg font-bold text-slate-900">Attendance Log History</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Official check-in logs recorded via institute biometric sensors and live lecture sessions.
               </p>
             </div>
-            <div className="flex items-center gap-3 text-xs font-mono">
-              <span className="px-3 py-1 rounded-xl bg-emerald-950 border border-emerald-800 text-emerald-300">
+            <div className="flex items-center gap-2 text-xs font-medium">
+              <span className="px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700">
                 Present: {attendance?.present ?? 0}
               </span>
-              <span className="px-3 py-1 rounded-xl bg-rose-950 border border-rose-800 text-rose-300">
+              <span className="px-3 py-1 rounded-lg bg-rose-50 border border-rose-200 text-rose-700">
                 Absent: {attendance?.absent ?? 0}
               </span>
             </div>
@@ -500,29 +496,29 @@ export default function StudentPortalPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs min-w-[600px]">
-              <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 font-mono text-[10px] uppercase">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-medium text-[11px] uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Date of Session</th>
                   <th className="py-3 px-4">Check-in Mode</th>
                   <th className="py-3 px-4">Punch / Join Time</th>
-                  <th className="py-3 px-4">Biometric Sensor / IP</th>
+                  <th className="py-3 px-4">Sensor / Gate</th>
                   <th className="py-3 px-4 text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 font-mono">
+              <tbody className="divide-y divide-slate-100">
                 {(attendance?.recentLogs || attendance?.logs || []).map((log: any) => (
-                  <tr key={log.id} className="hover:bg-slate-800/30">
-                    <td className="py-3 px-4 font-semibold text-slate-200">{log.date}</td>
-                    <td className="py-3 px-4 text-slate-300 uppercase text-[11px]">{log.mode}</td>
-                    <td className="py-3 px-4 text-slate-300">{log.check_in_time || '—'}</td>
-                    <td className="py-3 px-4 text-slate-400 text-[11px]">{log.ip_or_location || 'Campus Gate 1 Biometric'}</td>
+                  <tr key={log.id} className="hover:bg-slate-50">
+                    <td className="py-3 px-4 font-semibold text-slate-900">{log.date}</td>
+                    <td className="py-3 px-4 text-slate-600 uppercase text-xs">{log.mode}</td>
+                    <td className="py-3 px-4 text-slate-600">{log.check_in_time || '—'}</td>
+                    <td className="py-3 px-4 text-slate-500 text-xs">{log.ip_or_location || 'Campus Gate 1 Biometric'}</td>
                     <td className="py-3 px-4 text-right">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                      <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold uppercase border ${
                         log.status === 'present'
-                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : log.status === 'late'
-                          ? 'bg-amber-950 text-amber-400 border border-amber-800'
-                          : 'bg-rose-950 text-rose-400 border border-rose-800'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-rose-50 text-rose-700 border-rose-200'
                       }`}>
                         {log.status}
                       </span>
@@ -538,17 +534,17 @@ export default function StudentPortalPage() {
       {/* TAB: FEES & EMIS */}
       {activeTab === 'fees' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div className="p-6 rounded-xl border border-slate-200/80 bg-white shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
-                <h3 className="font-display text-lg font-bold text-white">Fee Plan & Installment Schedule</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Transparent fee ledger with online UPI payments and automated instant receipts.
+                <h3 className="text-lg font-bold text-slate-900">Fee Plan & Installment Schedule</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Fee ledger with online UPI payments, photo receipts, and instant reconciliation.
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-xs text-slate-400 font-mono">Total Course Fee</div>
-                <div className="text-xl font-bold font-display text-white">
+                <div className="text-xs text-slate-500">Total Course Fee</div>
+                <div className="text-xl font-bold text-slate-900">
                   ₹{(fees?.plan?.total_amount || enrollment?.total_fee || 45000).toLocaleString('en-IN')}
                 </div>
               </div>
@@ -556,7 +552,7 @@ export default function StudentPortalPage() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs min-w-[600px]">
-                <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 font-mono text-[10px] uppercase">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-medium text-[11px] uppercase tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Installment</th>
                     <th className="py-3 px-4">Amount</th>
@@ -565,7 +561,7 @@ export default function StudentPortalPage() {
                     <th className="py-3 px-4 text-right">Action / Receipt</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 font-mono">
+                <tbody className="divide-y divide-slate-100">
                   {(fees?.installments || []).map((inst: any) => {
                     const proof = (fees?.proofs || []).find((p: any) => p.emi_id === inst.id);
                     const isPaid = inst.status === 'paid' || proof?.status === 'verified';
@@ -573,39 +569,39 @@ export default function StudentPortalPage() {
                     const isRejectedProof = proof?.status === 'rejected';
 
                     return (
-                      <tr key={inst.id} className="hover:bg-slate-800/30">
-                        <td className="py-3 px-4 text-slate-200">
-                          <div className="font-medium">Installment #{inst.installment_no}</div>
+                      <tr key={inst.id} className="hover:bg-slate-50">
+                        <td className="py-3 px-4 text-slate-900">
+                          <div className="font-semibold">Installment #{inst.installment_no}</div>
                           {proof && (
-                            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1 mt-0.5">
-                              <ImageIcon className="w-3 h-3 text-cyan-400" />
-                              <span>Photo proof: {proof.reference}</span>
+                            <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                              <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Receipt ref: {proof.reference}</span>
                             </div>
                           )}
                         </td>
-                        <td className="py-3 px-4 font-bold text-white">₹{inst.amount.toLocaleString('en-IN')}</td>
-                        <td className="py-3 px-4 text-slate-300">{inst.due_date}</td>
+                        <td className="py-3 px-4 font-bold text-slate-900">₹{inst.amount.toLocaleString('en-IN')}</td>
+                        <td className="py-3 px-4 text-slate-600">{inst.due_date}</td>
                         <td className="py-3 px-4">
                           {isPaid ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1 w-fit">
-                              <CheckCircle2 className="w-3 h-3" />
-                              Verified & Paid
+                            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 w-fit">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Verified & Settled
                             </span>
                           ) : isPendingProof ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-amber-950 text-amber-300 border border-amber-800 flex items-center gap-1 w-fit animate-pulse">
-                              <Clock className="w-3 h-3" />
-                              Pending Owner Verification
+                            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold uppercase bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1 w-fit">
+                              <Clock className="w-3.5 h-3.5" />
+                              Pending Verification
                             </span>
                           ) : isRejectedProof ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-rose-950 text-rose-300 border border-rose-800 flex items-center gap-1 w-fit">
-                              <AlertCircle className="w-3 h-3" />
-                              Proof Rejected
+                            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1 w-fit">
+                              <AlertCircle className="w-3.5 h-3.5" />
+                              Receipt Rejected
                             </span>
                           ) : (
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                            <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold uppercase border ${
                               inst.status === 'overdue'
-                                ? 'bg-rose-950 text-rose-400 border border-rose-800'
-                                : 'bg-slate-800 text-slate-300 border border-slate-700'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-slate-100 text-slate-700 border-slate-200'
                             }`}>
                               {inst.status}
                             </span>
@@ -615,27 +611,27 @@ export default function StudentPortalPage() {
                           {isPaid ? (
                             <button
                               onClick={() => proof && setViewingProof(proof)}
-                              className="text-[11px] text-emerald-400 hover:text-emerald-300 flex items-center justify-end gap-1 ml-auto"
+                              className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center justify-end gap-1 ml-auto"
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>Verified Receipt</span>
-                              {proof && <Eye className="w-3 h-3 ml-0.5" />}
+                              {proof && <Eye className="w-3.5 h-3.5 ml-0.5" />}
                             </button>
                           ) : isPendingProof ? (
                             <button
                               onClick={() => setViewingProof(proof)}
-                              className="py-1 px-2.5 rounded-lg border border-amber-500/40 hover:bg-amber-950/40 text-amber-300 text-[11px] font-medium flex items-center gap-1 ml-auto transition-colors"
+                              className="py-1 px-2.5 rounded-lg border border-amber-200 hover:bg-amber-50 text-amber-700 text-xs font-medium flex items-center gap-1 ml-auto transition-colors"
                             >
-                              <Eye className="w-3 h-3" />
+                              <Eye className="w-3.5 h-3.5" />
                               <span>View Submitted Proof</span>
                             </button>
                           ) : (
                             <button
                               onClick={() => openPayModal(inst)}
-                              className="py-1 px-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110 text-white text-[11px] font-medium flex items-center gap-1 ml-auto shadow-sm"
+                              className="py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1 ml-auto shadow-xs transition-colors"
                             >
-                              <Upload className="w-3 h-3" />
-                              <span>{isRejectedProof ? 'Re-upload Photo' : 'Pay & Upload Photo'}</span>
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>{isRejectedProof ? 'Re-upload Receipt' : 'Pay & Upload Receipt'}</span>
                             </button>
                           )}
                         </td>
@@ -651,26 +647,26 @@ export default function StudentPortalPage() {
 
       {/* TAB: RECORDINGS */}
       {activeTab === 'recordings' && (
-        <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="p-6 rounded-xl border border-slate-200/80 bg-white shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
-              <h3 className="font-display text-lg font-bold text-white">Classroom & Hybrid Lecture Recordings</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                HD video archives of all sessions conducted in {enrollment?.batch_name}.
+              <h3 className="text-lg font-bold text-slate-900">Classroom Lecture Recordings</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Archived video sessions conducted in {enrollment?.batch_name}.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {recordings?.map((rec: any) => (
-              <div key={rec.id} className="p-4 rounded-xl border border-slate-800 bg-slate-950/70 flex flex-col justify-between space-y-3">
+              <div key={rec.id} className="p-4 rounded-xl border border-slate-200/80 bg-white flex flex-col justify-between space-y-3 shadow-xs hover:border-blue-300 transition-all">
                 <div>
-                  <div className="flex items-center justify-between text-[11px] font-mono text-cyan-400 mb-1">
+                  <div className="flex items-center justify-between text-xs text-blue-600 font-semibold mb-1">
                     <span>{rec.date}</span>
-                    <span>{rec.duration_minutes} min</span>
+                    <span className="text-slate-500 font-normal">{rec.duration_minutes} min</span>
                   </div>
-                  <h4 className="font-semibold text-sm text-white">{rec.title}</h4>
-                  <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                  <h4 className="font-semibold text-sm text-slate-900">{rec.title}</h4>
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">
                     {rec.topic_tags || 'Spring Boot Architecture, Microservices, REST Endpoints'}
                   </p>
                 </div>
@@ -679,7 +675,7 @@ export default function StudentPortalPage() {
                   href={rec.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-mono text-center flex items-center justify-center gap-1.5 transition-colors"
+                  className="py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium text-center flex items-center justify-center gap-1.5 transition-colors shadow-xs"
                 >
                   <Video className="w-3.5 h-3.5" />
                   <span>Stream Lecture</span>
@@ -692,11 +688,11 @@ export default function StudentPortalPage() {
 
       {/* TAB: ASSIGNMENTS */}
       {activeTab === 'assignments' && (
-        <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="p-6 rounded-xl border border-slate-200/80 bg-white shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
-              <h3 className="font-display text-lg font-bold text-white">Assignments & Lab Evaluations</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h3 className="text-lg font-bold text-slate-900">Assignments & Lab Evaluations</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
                 Weekly coding sprints, project submissions, and instructor code reviews.
               </p>
             </div>
@@ -704,30 +700,30 @@ export default function StudentPortalPage() {
 
           <div className="space-y-3">
             {assignments?.map((a: any) => (
-              <div key={a.id} className="p-4 rounded-xl border border-slate-800 bg-slate-950/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div key={a.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-white">{a.title}</span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                    <span className="font-semibold text-sm text-slate-900">{a.title}</span>
+                    <span className="text-[11px] px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-medium">
                       Max Marks: {a.max_marks}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">{a.description}</p>
-                  <div className="text-[11px] font-mono text-amber-400">
+                  <p className="text-xs text-slate-600">{a.description}</p>
+                  <div className="text-xs font-medium text-amber-700">
                     Due Date: {a.due_date}
                   </div>
                 </div>
 
                 <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase ${
                     a.submission_id
-                      ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                      : 'bg-slate-800 text-slate-400'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-slate-200 text-slate-700'
                   }`}>
                     {a.submission_id ? `Evaluated: ${a.marks || 90}/${a.max_marks}` : 'Pending Submission'}
                   </span>
 
-                  <button className="py-1 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-cyan-300 font-mono transition-colors">
+                  <button className="py-1.5 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs text-slate-700 font-medium transition-colors">
                     {a.submission_id ? 'View Feedback' : 'Submit Code'}
                   </button>
                 </div>
@@ -737,14 +733,13 @@ export default function StudentPortalPage() {
         </div>
       )}
 
-      {/* Online UPI Payment Simulation Modal */}
       {/* Student Payment & Photo Proof Upload Modal */}
       {showPayModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-command-darkest p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-white font-display font-bold text-base">
-                <CreditCard className="w-4 h-4 text-cyan-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-base">
+                <CreditCard className="w-5 h-5 text-blue-600" />
                 <span>Pay Installment #{showPayModal.installment_no}</span>
               </div>
               <button 
@@ -753,7 +748,7 @@ export default function StudentPortalPage() {
                   setProofImage(null);
                   setSubmitSuccessMsg(null);
                 }} 
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-slate-600 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -761,78 +756,78 @@ export default function StudentPortalPage() {
 
             {submitSuccessMsg ? (
               <div className="p-6 text-center space-y-3">
-                <div className="w-14 h-14 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 mx-auto animate-bounce">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mx-auto">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h4 className="font-display font-bold text-lg text-white">Payment Proof Submitted!</h4>
-                <p className="text-xs text-emerald-300 leading-relaxed">
-                  Your transaction receipt photo (UTR: <strong className="font-mono text-white">{utrRef}</strong>) has been queued for Owner verification in the Fee Reconciliation Engine.
+                <h4 className="font-bold text-lg text-slate-900">Payment Receipt Submitted!</h4>
+                <p className="text-xs text-emerald-700 leading-relaxed">
+                  Your transaction receipt photo (UTR: <strong className="text-slate-900">{utrRef}</strong>) has been queued for Director verification in the Fee Reconciliation Engine.
                 </p>
-                <div className="text-[11px] text-slate-400 font-mono">
-                  Once verified by the Director / Owner, your installment will be marked as settled.
+                <div className="text-xs text-slate-500">
+                  Once verified by the Director, your installment will be marked as settled.
                 </div>
               </div>
             ) : (
               <form onSubmit={handleSubmitProof} className="space-y-4 text-xs">
                 {/* Summary Info */}
-                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                   <div>
-                    <div className="text-slate-400 text-[11px]">Installment #{showPayModal.installment_no} • {enrollment?.course_name}</div>
-                    <div className="text-white font-semibold text-sm">{student.name} ({student.id})</div>
+                    <div className="text-slate-500 text-xs">Installment #{showPayModal.installment_no} &bull; {enrollment?.course_name}</div>
+                    <div className="text-slate-900 font-bold text-sm">{student.name} ({student.id})</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] text-slate-400 uppercase font-mono">Amount Due</div>
-                    <div className="text-cyan-300 font-bold font-mono text-base">₹{showPayModal.amount.toLocaleString('en-IN')}</div>
+                    <div className="text-[10px] text-slate-500 uppercase font-semibold">Amount Due</div>
+                    <div className="text-blue-600 font-bold text-base">₹{showPayModal.amount.toLocaleString('en-IN')}</div>
                   </div>
                 </div>
 
                 {/* Step 1: Scan QR */}
-                <div className="p-3.5 rounded-xl border border-dashed border-slate-700 bg-slate-950/80 flex items-center gap-4">
-                  <div className="p-2 rounded-lg bg-white">
+                <div className="p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 flex items-center gap-4">
+                  <div className="p-2 rounded-lg bg-white border border-slate-200 shadow-xs">
                     <QrCode className="w-16 h-16 text-slate-900" />
                   </div>
                   <div className="space-y-1 flex-1">
-                    <div className="text-[11px] font-mono text-cyan-400 font-semibold">1. Scan & Pay via any UPI App</div>
-                    <div className="text-slate-200 font-mono text-[11px] bg-slate-900 px-2 py-1 rounded border border-slate-800">
+                    <div className="text-xs font-semibold text-blue-600">1. Scan & Pay via any UPI App</div>
+                    <div className="text-slate-900 text-xs font-medium bg-white px-2 py-1 rounded border border-slate-200">
                       instipilot.academy@hdfcbank
                     </div>
-                    <p className="text-[10px] text-slate-400">GPay, PhonePe, Paytm, BHIM or Netbanking</p>
+                    <p className="text-[11px] text-slate-500">GPay, PhonePe, Paytm, BHIM or Netbanking</p>
                   </div>
                 </div>
 
                 {/* Step 2: Photo Option (Student Only) */}
-                <div className="space-y-2 pt-1 border-t border-slate-800">
+                <div className="space-y-2 pt-1 border-t border-slate-100">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-mono uppercase font-semibold text-amber-400 flex items-center gap-1.5">
-                      <ImageIcon className="w-3.5 h-3.5" />
-                      <span>2. Upload Payment Photo / Screenshot (Required)</span>
+                    <label className="text-xs uppercase font-semibold text-slate-800 flex items-center gap-1.5">
+                      <ImageIcon className="w-4 h-4 text-blue-600" />
+                      <span>2. Upload Payment Screenshot (Required)</span>
                     </label>
                     <button
                       type="button"
                       onClick={handleGenerateSampleReceipt}
-                      className="text-[10px] text-cyan-400 hover:text-cyan-300 underline font-mono"
+                      className="text-xs text-blue-600 hover:text-blue-700 underline font-medium"
                     >
                       + Use Demo Receipt Photo
                     </button>
                   </div>
 
                   {proofImage ? (
-                    <div className="p-3 rounded-xl border border-cyan-500/50 bg-slate-950 flex items-center gap-3">
+                    <div className="p-3 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center gap-3">
                       <img
                         src={proofImage}
                         alt="Uploaded preview"
-                        className="w-16 h-20 object-cover rounded-lg border border-slate-700"
+                        className="w-16 h-20 object-cover rounded-lg border border-slate-200"
                       />
                       <div className="flex-1 space-y-1">
-                        <div className="text-emerald-400 font-semibold flex items-center gap-1 text-[11px]">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        <div className="text-emerald-700 font-semibold flex items-center gap-1 text-xs">
+                          <CheckCircle2 className="w-4 h-4" />
                           <span>Photo Screenshot Attached</span>
                         </div>
-                        <p className="text-[10px] text-slate-400">Ready for Owner verification in the Reconciliation Engine.</p>
+                        <p className="text-xs text-slate-500">Ready for Director verification in the Fee Hub.</p>
                         <button
                           type="button"
                           onClick={() => setProofImage(null)}
-                          className="text-[10px] text-rose-400 hover:text-rose-300 underline"
+                          className="text-xs text-rose-600 hover:underline font-medium"
                         >
                           Remove / Change Photo
                         </button>
@@ -840,10 +835,10 @@ export default function StudentPortalPage() {
                     </div>
                   ) : (
                     <label className="cursor-pointer block">
-                      <div className="p-4 rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/60 hover:border-cyan-500/60 text-center space-y-1.5 transition-colors">
+                      <div className="p-5 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 hover:border-blue-400 text-center space-y-1.5 transition-colors">
                         <Upload className="w-6 h-6 text-slate-400 mx-auto" />
-                        <div className="text-[11px] text-slate-300 font-medium">Click to upload payment screenshot from phone / PC</div>
-                        <div className="text-[10px] text-slate-500 font-mono">PNG, JPG, WEBP accepted</div>
+                        <div className="text-xs text-slate-700 font-medium">Click to upload payment screenshot from phone / PC</div>
+                        <div className="text-[10px] text-slate-400">PNG, JPG, WEBP accepted</div>
                       </div>
                       <input
                         type="file"
@@ -857,7 +852,7 @@ export default function StudentPortalPage() {
 
                 {/* Step 3: UPI Reference / UTR */}
                 <div>
-                  <label className="text-[11px] font-mono uppercase text-slate-400 block mb-1">
+                  <label className="text-xs font-semibold uppercase text-slate-700 block mb-1">
                     3. UPI Reference / UTR Number (12 Digits)
                   </label>
                   <input
@@ -866,13 +861,13 @@ export default function StudentPortalPage() {
                     value={utrRef}
                     onChange={(e) => setUtrRef(e.target.value)}
                     placeholder="e.g. UPI/HDFC/982731827419 or 471029481023"
-                    className="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 font-mono"
                   />
                 </div>
 
                 {/* Optional Note */}
                 <div>
-                  <label className="text-[11px] font-mono uppercase text-slate-400 block mb-1">
+                  <label className="text-xs font-semibold uppercase text-slate-700 block mb-1">
                     Remarks / Sender Note (Optional)
                   </label>
                   <input
@@ -880,7 +875,7 @@ export default function StudentPortalPage() {
                     value={paymentNotes}
                     onChange={(e) => setPaymentNotes(e.target.value)}
                     placeholder="e.g. Paid from father's Google Pay account"
-                    className="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500"
                   />
                 </div>
 
@@ -888,7 +883,7 @@ export default function StudentPortalPage() {
                 <button
                   type="submit"
                   disabled={submittingProof || !proofImage}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 disabled:opacity-50 text-white font-bold text-xs shadow-neon-amber transition-all flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
                 >
                   {submittingProof ? (
                     <>
@@ -898,7 +893,7 @@ export default function StudentPortalPage() {
                   ) : (
                     <>
                       <Send className="w-4 h-4" />
-                      <span>Submit Photo Proof for Owner Verification</span>
+                      <span>Submit Photo Proof for Director Verification</span>
                     </>
                   )}
                 </button>
@@ -910,69 +905,69 @@ export default function StudentPortalPage() {
 
       {/* View Submitted Proof Modal */}
       {viewingProof && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-command-darkest p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-white font-display font-bold text-base">
-                <ImageIcon className="w-4 h-4 text-cyan-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-base">
+                <ImageIcon className="w-5 h-5 text-blue-600" />
                 Submitted Payment Proof
               </div>
-              <button onClick={() => setViewingProof(null)} className="text-slate-400 hover:text-white p-1">
+              <button onClick={() => setViewingProof(null)} className="text-slate-400 hover:text-slate-600 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3.5 text-xs">
               {/* Receipt Image */}
-              <div className="rounded-xl border border-slate-800 bg-slate-950 p-2 flex items-center justify-center max-h-[300px] overflow-hidden">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 flex items-center justify-center max-h-[300px] overflow-hidden">
                 {viewingProof.proof_image_url ? (
                   <img
                     src={viewingProof.proof_image_url}
                     alt="Receipt preview"
-                    className="max-h-[280px] w-auto object-contain rounded-lg"
+                    className="max-h-[280px] w-auto object-contain rounded-lg shadow-xs"
                   />
                 ) : (
-                  <span className="text-slate-500">No image record</span>
+                  <span className="text-slate-400">No image record</span>
                 )}
               </div>
 
               {/* Status Banner */}
-              <div className={`p-3 rounded-xl border text-center font-mono ${
+              <div className={`p-3 rounded-lg border text-center ${
                 viewingProof.status === 'verified'
-                  ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                   : viewingProof.status === 'rejected'
-                  ? 'bg-rose-950/60 border-rose-500/40 text-rose-300'
-                  : 'bg-amber-950/60 border-amber-500/40 text-amber-300'
+                  ? 'bg-rose-50 border-rose-200 text-rose-800'
+                  : 'bg-amber-50 border-amber-200 text-amber-800'
               }`}>
                 <div className="font-bold uppercase text-xs">
-                  {viewingProof.status === 'verified' ? '✓ Verified by Institute Owner' : viewingProof.status === 'rejected' ? '❌ Proof Rejected by Owner' : '⏳ Verification Pending'}
+                  {viewingProof.status === 'verified' ? '&check; Verified by Director' : viewingProof.status === 'rejected' ? '❌ Receipt Rejected by Director' : '⏳ Verification Pending'}
                 </div>
                 {viewingProof.rejection_reason && (
-                  <div className="text-[11px] text-rose-200 mt-1">Reason: {viewingProof.rejection_reason}</div>
+                  <div className="text-xs text-rose-700 mt-1">Reason: {viewingProof.rejection_reason}</div>
                 )}
                 {viewingProof.status === 'pending' && (
-                  <div className="text-[10px] text-amber-400/90 mt-0.5">Awaiting Owner review in Fee Reconciliation Engine</div>
+                  <div className="text-xs text-amber-700 mt-0.5">Awaiting Director review in Fee Reconciliation Engine</div>
                 )}
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5 font-mono text-[11px]">
+              <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Amount:</span>
-                  <span className="text-white font-bold">₹{viewingProof.amount.toLocaleString('en-IN')}</span>
+                  <span className="text-slate-500">Amount:</span>
+                  <span className="text-slate-900 font-bold">₹{viewingProof.amount.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">UTR / Ref:</span>
-                  <span className="text-cyan-300 font-semibold truncate ml-2">{viewingProof.reference}</span>
+                  <span className="text-slate-500">UTR / Ref:</span>
+                  <span className="text-blue-700 font-semibold font-mono truncate ml-2">{viewingProof.reference}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Submitted:</span>
-                  <span className="text-slate-300">{viewingProof.created_at}</span>
+                  <span className="text-slate-500">Submitted:</span>
+                  <span className="text-slate-700">{viewingProof.created_at}</span>
                 </div>
               </div>
 
               <button
                 onClick={() => setViewingProof(null)}
-                className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs transition-colors"
+                className="w-full py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs transition-colors"
               >
                 Close
               </button>

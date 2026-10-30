@@ -12,9 +12,8 @@ import {
   ArrowRight, 
   CheckCircle2, 
   Lock, 
-  Zap,
-  Activity,
-  Layers
+  Building2,
+  BookOpen
 } from 'lucide-react';
 import { UserRole, ROLE_PERMISSIONS } from '@/lib/rbac/permissions';
 import { DEMO_USERS } from '@/lib/rbac/user-types';
@@ -32,7 +31,11 @@ export default function LoginPage() {
         body: JSON.stringify({ role }),
       });
       if (res.ok) {
-        router.push('/dashboard');
+        if (role === 'student') {
+          router.push('/student-portal');
+        } else {
+          router.push('/dashboard');
+        }
         router.refresh();
       }
     } catch (err) {
@@ -47,90 +50,87 @@ export default function LoginPage() {
       role: 'owner' as UserRole,
       title: 'Director / Owner',
       name: 'Priya Sharma',
-      badge: 'Unrestricted Master Admin',
-      icon: <Crown className="w-5 h-5 text-emerald-400" />,
-      color: 'border-emerald-500/30 hover:border-emerald-400 bg-emerald-950/20 text-emerald-400',
-      description: 'Complete visibility across finances, batch scheduling, student retention, outbox dispatch, and security audit trails.',
-      permissions: ['All 17 SQLite tables accessible', 'Timetable Re-plan & Clash Resolution', 'Full Fee Collections & Audit Log']
+      badge: 'Executive Oversight',
+      icon: <Crown className="w-5 h-5 text-emerald-600" />,
+      color: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      description: 'Comprehensive visibility across finances, batch scheduling, student retention, outbox dispatch, and staff accounts.',
+      permissions: ['Complete institute administrative access', 'Timetable Re-plan & Clash Resolution', 'Full Fee Collections & Audit Log']
     },
     {
       role: 'counselor' as UserRole,
       title: 'Academic Counselor',
       name: 'Rajesh Rao',
-      badge: 'Student Success & Retention',
-      icon: <UserCheck className="w-5 h-5 text-cyan-400" />,
-      color: 'border-cyan-500/30 hover:border-cyan-400 bg-cyan-950/20 text-cyan-400',
-      description: 'Attendance tracking, dropout risk radar, class recordings, and drafting human-approved WhatsApp alerts to parents.',
-      permissions: ['Students & Batch Attendance', 'WhatsApp Outreach Drafting', 'Strict Zero-Access to Payments & Banking']
+      badge: 'Student Retention',
+      icon: <UserCheck className="w-5 h-5 text-blue-600" />,
+      color: 'border-blue-200 bg-blue-50 text-blue-700',
+      description: 'Attendance tracking, dropout risk radar, class recordings, and drafting approved WhatsApp outreach to guardians.',
+      permissions: ['Students & Batch Attendance Records', 'WhatsApp Outreach Drafting', 'Strict Zero-Access to Fee Ledger']
     },
     {
       role: 'trainer' as UserRole,
-      title: 'Lead Technical Trainer',
+      title: 'Technical Faculty',
       name: 'Vikram Malhotra',
-      badge: 'Curriculum & Delivery',
-      icon: <GraduationCap className="w-5 h-5 text-violet-400" />,
-      color: 'border-violet-500/30 hover:border-violet-400 bg-violet-950/20 text-violet-400',
-      description: 'Daily timetable, lecture recordings, classroom/online attendance check-ins, and assignment evaluations.',
-      permissions: ['Assigned Batches & Students', 'Mark Attendance & Upload Recordings', 'Never Sees Fees, EMIs or Collections']
+      badge: 'Classroom Delivery',
+      icon: <GraduationCap className="w-5 h-5 text-indigo-600" />,
+      color: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+      description: 'Daily timetable, lecture recordings, classroom/online attendance rosters, and student evaluations.',
+      permissions: ['Assigned Batches & Student Rosters', 'Mark Session Attendance & Upload Recordings', 'Never Sees Financial Data']
     },
     {
       role: 'accounts' as UserRole,
-      title: 'Accounts & Finance Manager',
+      title: 'Finance & Accounts',
       name: 'Neha Joshi',
-      badge: 'Fee Collections & EMI Engine',
-      icon: <CreditCard className="w-5 h-5 text-amber-400" />,
-      color: 'border-amber-500/30 hover:border-amber-400 bg-amber-950/20 text-amber-400',
-      description: 'Fee installments, overdue EMI alerts, UPI/Bank CSV reconciliation, payment receipts, and collection reminders.',
-      permissions: ['Fee Plans, EMIs & Payments', 'Bank Statement CSV Auto-Matcher', 'No Biometric/Internal Attendance Logs']
+      badge: 'Fee Collections & EMIs',
+      icon: <CreditCard className="w-5 h-5 text-amber-600" />,
+      color: 'border-amber-200 bg-amber-50 text-amber-700',
+      description: 'Fee installments, overdue EMI alerts, bank statement reconciliation, verified payment receipts, and reminders.',
+      permissions: ['Fee Plans, EMIs & Payment Entry', 'Bank Statement CSV Auto-Matcher', 'No Internal Attendance Rosters']
     }
   ];
 
   return (
-    <div className="min-h-screen bg-command-darkest bg-grid-pattern relative flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
-      {/* Ambient background glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-cyan-500/15 via-violet-600/10 to-transparent blur-3xl pointer-events-none"></div>
-
-      {/* Top Bar */}
-      <header className="relative z-10 w-full border-b border-slate-800/80 px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50 relative flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+      {/* Top Header */}
+      <header className="relative z-10 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md px-6 py-4 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-violet-600 flex items-center justify-center shadow-neon-cyan">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+            <GraduationCap className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="font-display text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            <h1 className="font-display text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
               InstiPilot
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-500/30">
-                PRO v1.0
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                Enterprise
               </span>
             </h1>
-            <p className="text-xs text-slate-400">Autonomous Institute Operations & AI Copilot</p>
+            <p className="text-xs text-slate-500">Institute Operations & Student Management System</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 font-mono">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            Zero-Trust RBAC + AST Guard
+        <div className="flex items-center gap-3 text-xs text-slate-500">
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            Role-Based Access Control (RBAC)
           </span>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 py-8 flex flex-col justify-center">
+      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 py-12 flex flex-col justify-center">
         {/* Hero Section */}
-        <div className="text-center max-w-3xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-700/60 text-xs text-cyan-300 mb-4 shadow-inner">
-            <Zap className="w-3.5 h-3.5 text-cyan-400" />
-            Training Institute Operations Reimagined
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs text-blue-700 mb-4 font-semibold shadow-xs">
+            <Building2 className="w-3.5 h-3.5 text-blue-600" />
+            Academy & Training Institute Management
           </div>
-          <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-white mb-4 leading-tight">
-            Stop running your institute on <br className="hidden sm:block" />
-            <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-violet-400 bg-clip-text text-transparent">
-              spreadsheets, WhatsApp & memory.
+          <h2 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-4 leading-tight">
+            Manage your institute with <br className="hidden sm:block" />
+            <span className="text-blue-600">
+              precision, clarity & ease.
             </span>
           </h2>
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto">
-            InstiPilot orchestrates batches, hybrid attendance, EMI installments, and timetable clashes in real-time — with an AI Operations Copilot that turns complex multi-table queries into verified actions.
+          <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl mx-auto">
+            InstiPilot unifies batches, attendance tracking, installment collections, and guardian communications on a clean, reliable, and secure platform.
           </p>
         </div>
 
@@ -138,13 +138,13 @@ export default function LoginPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4 px-1">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400">
-                Select a Role for Instant 1-Click Demo Evaluation
+              <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Select a Role for Instant Evaluation
               </h3>
             </div>
-            <span className="text-[11px] font-mono text-slate-500">
-              No credentials needed &bull; Complete sandbox pre-seeded
+            <span className="text-[11px] text-slate-500">
+              No credentials required &bull; Pre-loaded sandbox institute
             </span>
           </div>
 
@@ -154,32 +154,32 @@ export default function LoginPage() {
               return (
                 <div
                   key={rc.role}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/80 p-5 backdrop-blur-xl transition-all duration-200 hover:border-slate-700 hover:bg-slate-900/95 hover:shadow-xl hover:-translate-y-1"
+                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5"
                 >
                   <div>
                     {/* Header with Icon and Badge */}
                     <div className="flex items-center justify-between mb-3">
-                      <div className="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700/60 group-hover:scale-105 transition-transform">
+                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
                         {rc.icon}
                       </div>
-                      <span className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded-md border ${rc.color}`}>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${rc.color}`}>
                         {rc.role.toUpperCase()}
                       </span>
                     </div>
 
-                    <h4 className="font-display text-base font-bold text-white group-hover:text-cyan-300 transition-colors">
+                    <h4 className="font-display text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                       {rc.title}
                     </h4>
-                    <p className="text-xs font-medium text-slate-400 mb-3">{rc.name}</p>
-                    <p className="text-xs text-slate-300/80 leading-relaxed mb-4">
+                    <p className="text-xs font-medium text-slate-500 mb-3">{rc.name}</p>
+                    <p className="text-xs text-slate-600 leading-relaxed mb-4">
                       {rc.description}
                     </p>
 
                     {/* Key Capabilities */}
-                    <div className="space-y-1.5 mb-5 border-t border-slate-800/80 pt-3">
+                    <div className="space-y-1.5 mb-5 border-t border-slate-100 pt-3">
                       {rc.permissions.map((p, idx) => (
-                        <div key={idx} className="flex items-start gap-1.5 text-[11px] text-slate-400">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400/80 mt-0.5 flex-shrink-0" />
+                        <div key={idx} className="flex items-start gap-1.5 text-[11px] text-slate-600">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
                           <span>{p}</span>
                         </div>
                       ))}
@@ -190,11 +190,11 @@ export default function LoginPage() {
                   <button
                     onClick={() => handleQuickLogin(rc.role)}
                     disabled={isLoading}
-                    className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-cyan-500 hover:text-black text-slate-200 font-medium text-xs transition-all flex items-center justify-center gap-2 group-hover:bg-cyan-500 group-hover:text-black shadow-md"
+                    className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-800 font-semibold text-xs transition-all flex items-center justify-center gap-2 group-hover:bg-blue-600 group-hover:text-white shadow-xs"
                   >
                     {isLoading ? (
                       <span className="flex items-center gap-2">
-                        <span className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></span>
+                        <span className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></span>
                         Authenticating...
                       </span>
                     ) : (
@@ -210,33 +210,33 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Live Safety Callout Strip */}
-        <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 flex flex-wrap items-center justify-between gap-4 text-xs">
+        {/* Security Callout Strip */}
+        <div className="rounded-xl border border-slate-200 bg-white p-4 flex flex-wrap items-center justify-between gap-4 text-xs shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-950/50 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-semibold text-slate-200">Strict Server-Enforced RBAC</div>
-              <div className="text-[11px] text-slate-400">
-                Trainers can never access fees. Accounts can never access attendance logs. Enforced via DB AST validation.
+              <div className="font-semibold text-slate-900">Enforced Role-Based Security</div>
+              <div className="text-[11px] text-slate-500">
+                Trainers cannot access fees. Accounts cannot view internal attendance records. Verified via database policy checks.
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 font-mono text-[11px] text-slate-400">
-            <span className="px-2 py-1 rounded bg-slate-900 border border-slate-800">
-              MOCK_LLM: Enabled
+          <div className="flex items-center gap-2 text-[11px] text-slate-600 font-medium">
+            <span className="px-2 py-1 rounded bg-slate-100 border border-slate-200">
+              Database: SQLite WAL
             </span>
-            <span className="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-emerald-400">
-              DB: better-sqlite3 WAL
+            <span className="px-2 py-1 rounded bg-slate-100 border border-slate-200 text-emerald-700">
+              Status: Live & Verified
             </span>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 w-full border-t border-slate-800/80 px-6 py-4 text-center text-xs text-slate-500">
-        InstiPilot &bull; PS1: Institute Operations Copilot &bull; Built with Next.js 14, SQLite, Gemini AI & Recharts
+      <footer className="relative z-10 w-full border-t border-slate-200 bg-white px-6 py-4 text-center text-xs text-slate-500 shadow-xs">
+        InstiPilot &bull; Training Institute Operations & Student Management System
       </footer>
     </div>
   );

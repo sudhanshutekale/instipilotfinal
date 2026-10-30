@@ -46,8 +46,8 @@ export default function AppShell({ currentUser, children }: AppShellProps) {
   const isFourthTabActive = pathname.startsWith(fourthTabHref);
 
   return (
-    <div className="min-h-screen bg-surface-darkest text-slate-100 flex flex-col selection:bg-brand-500 selection:text-white">
-      {/* Top Command Navbar */}
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
+      {/* Top Navigation Bar */}
       <Navbar
         currentUser={activeUser}
         onOpenCopilot={() => setCopilotOpen(true)}
@@ -73,12 +73,12 @@ export default function AppShell({ currentUser, children }: AppShellProps) {
       {/* Mobile Fixed Bottom Navigation Bar */}
       <nav 
         aria-label="Mobile Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-darkest/95 backdrop-blur-xl border-t border-slate-800/80 px-2 py-1.5 flex items-center justify-around shadow-2xl"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1.5 flex items-center justify-around shadow-lg"
       >
         <Link
           href={homeHref}
           className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-medium transition-colors ${
-            isHomeActive ? 'text-brand-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            isHomeActive ? 'text-blue-600 font-semibold' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <LayoutDashboard className="w-4 h-4 mb-0.5" />
@@ -88,7 +88,7 @@ export default function AppShell({ currentUser, children }: AppShellProps) {
         <Link
           href={secondTabHref}
           className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-medium transition-colors ${
-            isSecondTabActive ? 'text-brand-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            isSecondTabActive ? 'text-blue-600 font-semibold' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           {isStudent ? <UserCheck className="w-4 h-4 mb-0.5" /> : <Users className="w-4 h-4 mb-0.5" />}
@@ -101,16 +101,16 @@ export default function AppShell({ currentUser, children }: AppShellProps) {
           className="flex flex-col items-center justify-center -mt-4 group"
           aria-label="Open Assistant"
         >
-          <div className="w-11 h-11 rounded-2xl bg-brand-600 hover:bg-brand-500 flex items-center justify-center shadow-card group-hover:scale-105 group-active:scale-95 transition-transform border border-brand-400/30">
+          <div className="w-11 h-11 rounded-2xl bg-blue-600 hover:bg-blue-700 flex items-center justify-center shadow-md group-hover:scale-105 group-active:scale-95 transition-transform border border-blue-500">
             <Sparkles className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[10px] font-medium text-slate-300 mt-1">Assistant</span>
+          <span className="text-[10px] font-medium text-slate-600 mt-1">Copilot</span>
         </button>
 
         <Link
           href={fourthTabHref}
           className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-medium transition-colors ${
-            isFourthTabActive ? 'text-brand-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            isFourthTabActive ? 'text-blue-600 font-semibold' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           {isStudent ? <Video className="w-4 h-4 mb-0.5" /> : <Layers className="w-4 h-4 mb-0.5" />}
@@ -120,7 +120,7 @@ export default function AppShell({ currentUser, children }: AppShellProps) {
         <button
           onClick={() => setMobileNavOpen((prev) => !prev)}
           className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-medium transition-colors ${
-            mobileNavOpen ? 'text-brand-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            mobileNavOpen ? 'text-blue-600 font-semibold' : 'text-slate-500 hover:text-slate-800'
           }`}
           aria-label="Toggle full menu"
         >
@@ -129,7 +129,7 @@ export default function AppShell({ currentUser, children }: AppShellProps) {
         </button>
       </nav>
 
-      {/* Slide-in AI Operations Copilot Drawer */}
+      {/* Slide-in Operations Copilot Drawer */}
       <CopilotDrawer
         isOpen={copilotOpen}
         onClose={() => setCopilotOpen(false)}
