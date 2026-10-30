@@ -11,48 +11,67 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0A0F1D",
+        background: "#080C15",
         foreground: "#F8FAFC",
+        brand: {
+          50: "#EEF2FF",
+          100: "#E0E7FF",
+          200: "#C7D2FE",
+          300: "#A5B4FC",
+          400: "#818CF8",
+          500: "#6366F1",
+          600: "#4F46E5",
+          700: "#4338CA",
+          800: "#3730A3",
+          900: "#312E81",
+          950: "#1E1B4B"
+        },
+        surface: {
+          darkest: "#070B13",
+          DEFAULT: "#0D1322",
+          card: "#111827",
+          border: "#1F2937",
+          borderSubtle: "#1B2435",
+          hover: "#1A2336",
+          active: "#212D45"
+        },
         command: {
-          darkest: "#060913",
-          bg: "#0A0F1D",
-          card: "#0F172A",
+          darkest: "#080C15",
+          bg: "#0B101D",
+          card: "#0F1626",
           cardBorder: "#1E293B",
-          cardHover: "#182238",
+          cardHover: "#162035",
           subtle: "#334155"
         },
         neon: {
-          cyan: "#00F0FF",
-          violet: "#A855F7",
-          purple: "#8B5CF6",
+          cyan: "#38BDF8",
+          violet: "#818CF8",
+          purple: "#6366F1",
           emerald: "#10B981",
           amber: "#F59E0B",
           rose: "#F43F5E"
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Space Grotesk', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       backgroundImage: {
-        'radial-gradient': 'radial-gradient(circle at 50% 0%, var(--tw-gradient-stops))',
-        'grid-pattern': "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40L40 40 40 0' fill='none' stroke='%231e293b' stroke-width='0.5' stroke-opacity='0.4'/%3E%3C/svg%3E\")",
+        'subtle-glow': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent 70%)',
+        'soft-mesh': 'radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 40%)',
       },
       boxShadow: {
-        'neon-cyan': '0 0 20px -3px rgba(0, 240, 255, 0.35)',
-        'neon-violet': '0 0 20px -3px rgba(168, 85, 247, 0.35)',
-        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+        'subtle': '0 1px 2px 0 rgba(0, 0, 0, 0.3)',
+        'card': '0 4px 20px -2px rgba(0, 0, 0, 0.4)',
+        'card-hover': '0 10px 25px -3px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.25)',
+        'brand': '0 0 20px -3px rgba(99, 102, 241, 0.25)',
+        'neon-cyan': '0 4px 14px 0 rgba(56, 189, 248, 0.2)',
+        'neon-violet': '0 4px 14px 0 rgba(99, 102, 241, 0.25)',
+        'glass': '0 8px 30px rgba(0, 0, 0, 0.35)',
       },
       animation: {
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
-      },
-      keyframes: {
-        glow: {
-          '0%': { boxShadow: '0 0 5px rgba(0, 240, 255, 0.2)' },
-          '100%': { boxShadow: '0 0 20px rgba(0, 240, 255, 0.6)' },
-        }
       }
     },
   },

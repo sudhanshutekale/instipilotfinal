@@ -164,356 +164,357 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Top Welcome & Mission Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-cyan-950/40 via-slate-900/90 to-violet-950/30 backdrop-blur-xl shadow-glass">
-        <div className="flex items-center gap-3.5">
-          <div className="relative flex-shrink-0">
-            <img
-              src={user?.avatarUrl || (user?.role === 'owner' ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150')}
-              alt={displayName}
-              className="w-12 h-12 rounded-xl object-cover border-2 border-cyan-400/40 shadow-neon-cyan"
-            />
-            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-slate-950"></span>
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-[11px] font-mono uppercase tracking-widest text-cyan-400">
-                Operations Live Radar &bull; Academic Year 2026-27
-              </span>
+      {/* Top Welcome Banner — Sophisticated Executive Academic Overview */}
+      <div className="relative overflow-hidden p-6 sm:p-7 rounded-2xl border border-surface-border bg-gradient-to-r from-surface-card via-slate-900 to-indigo-950/20 shadow-card">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-shrink-0">
+              <img
+                src={user?.avatarUrl || (user?.role === 'owner' ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150')}
+                alt={displayName}
+                className="w-14 h-14 rounded-2xl object-cover border-2 border-brand-500/30 shadow-subtle"
+              />
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-slate-950" title="Active Session"></span>
             </div>
-            <h2 className="font-display text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center flex-wrap gap-2">
-              <span>Welcome back, {displayName}</span>
-              {user?.role === 'owner' && (
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 font-semibold shadow-sm">
-                  Owner & Director
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-400">
+                  Academic Term 2026-27 &bull; Central Overview
                 </span>
-              )}
-            </h2>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Role: <span className="text-cyan-300 font-semibold uppercase">{user?.role || 'owner'}</span> &bull; 
-              {user?.role === 'trainer' && ' Showing your pedagogical sessions and student rosters.'}
-              {user?.role === 'counselor' && ' Monitoring student attendance anomalies & intervention alerts.'}
-              {user?.role === 'accounts' && ' Tracking EMI collections, payments, and bank reconciliation.'}
-              {(!user?.role || user?.role === 'owner') && ' Master command center with full institutional oversight.'}
-            </p>
+              </div>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center flex-wrap gap-2.5">
+                <span>Welcome back, {displayName}</span>
+                {user?.role === 'owner' && (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-500/15 text-brand-300 border border-brand-500/30">
+                    Director & Head of Institute
+                  </span>
+                )}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                Role: <span className="text-brand-300 font-semibold uppercase">{user?.role || 'owner'}</span> &bull; 
+                {user?.role === 'trainer' && ' Direct schedule, attendance rosters, and student logs.'}
+                {user?.role === 'counselor' && ' Monitoring attendance retention signals & parent communications.'}
+                {user?.role === 'accounts' && ' Tracking tuition fees, installments, and payment reconciliations.'}
+                {(!user?.role || user?.role === 'owner') && ' Institutional command oversight across all batches, faculty, and finances.'}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 font-mono text-xs">
-          <div className="px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+          <div className="flex items-center gap-3">
+            <div className="px-3.5 py-2 rounded-xl bg-surface-darkest/80 border border-surface-border text-slate-300 flex items-center gap-2.5 text-xs font-medium">
+              <Calendar className="w-4 h-4 text-brand-400" />
+              <span>{new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* KPI Cards Row — All fully interactive navigation buttons */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Active Students Button */}
+      {/* KPI Cards Row — Elegant, crisp, clickable metric widgets */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        {/* KPI 1: Active Students */}
         <Link 
           href="/students"
-          className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-cyan-500/40 hover:bg-slate-900/90 transition-all block cursor-pointer"
+          className="p-5 rounded-2xl border border-surface-border bg-surface-card hover:border-brand-500/40 hover:bg-surface-hover transition-all block cursor-pointer group shadow-card"
         >
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-medium uppercase font-mono tracking-wider">Active Students</span>
-            <div className="p-2 rounded-xl bg-cyan-950/60 text-cyan-400 border border-cyan-500/20 group-hover:scale-110 transition-transform">
+          <div className="flex items-center justify-between text-slate-400 mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Enrolled Students</span>
+            <div className="p-2.5 rounded-xl bg-blue-950/40 text-blue-400 border border-blue-500/20 group-hover:bg-blue-900/40 transition-colors">
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="font-display text-3xl font-bold text-white mb-1">
+          <div className="font-display text-3xl font-extrabold text-white mb-2 tracking-tight">
             {kpis?.activeStudents ?? '—'}
           </div>
-          <div className="text-[11px] text-cyan-400 font-mono flex items-center justify-between">
-            <span className="flex items-center gap-1 text-emerald-400">
-              <TrendingUp className="w-3 h-3" /> 100% verified enrollments
+          <div className="text-xs text-slate-400 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+              <TrendingUp className="w-3.5 h-3.5" /> 100% Verified Admissions
             </span>
-            <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-cyan-400" />
+            <ArrowUpRight className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-blue-400" />
           </div>
         </Link>
 
-        {/* KPI 2: Active Batches Button */}
+        {/* KPI 2: Active Batches */}
         <Link 
           href="/batches?status=ongoing" 
-          className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-violet-500/40 hover:bg-slate-900/90 transition-all block cursor-pointer"
+          className="p-5 rounded-2xl border border-surface-border bg-surface-card hover:border-brand-500/40 hover:bg-surface-hover transition-all block cursor-pointer group shadow-card"
         >
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-medium uppercase font-mono tracking-wider">Active Batches</span>
-            <div className="p-2 rounded-xl bg-violet-950/60 text-violet-400 border border-violet-500/20 group-hover:scale-110 transition-transform">
+          <div className="flex items-center justify-between text-slate-400 mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Ongoing Batches</span>
+            <div className="p-2.5 rounded-xl bg-indigo-950/40 text-indigo-400 border border-indigo-500/20 group-hover:bg-indigo-900/40 transition-colors">
               <Layers className="w-4 h-4" />
             </div>
           </div>
-          <div className="font-display text-3xl font-bold text-white mb-1">
+          <div className="font-display text-3xl font-extrabold text-white mb-2 tracking-tight">
             {kpis?.activeBatches ?? '—'}
           </div>
-          <div className="text-[11px] text-violet-300 font-mono flex items-center justify-between">
-            <span>Across 5 physical & virtual labs</span>
-            <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-violet-400" />
+          <div className="text-xs text-slate-400 flex items-center justify-between">
+            <span>5 Campus & Virtual Studios</span>
+            <ArrowUpRight className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-indigo-400" />
           </div>
         </Link>
 
-        {/* KPI 3: Attendance Rate Button */}
+        {/* KPI 3: Attendance Rate */}
         <Link 
           href="/attendance"
-          className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-emerald-500/40 hover:bg-slate-900/90 transition-all block cursor-pointer"
+          className="p-5 rounded-2xl border border-surface-border bg-surface-card hover:border-brand-500/40 hover:bg-surface-hover transition-all block cursor-pointer group shadow-card"
         >
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-medium uppercase font-mono tracking-wider">Attendance Rate</span>
-            <div className="p-2 rounded-xl bg-emerald-950/60 text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+          <div className="flex items-center justify-between text-slate-400 mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Class Attendance</span>
+            <div className="p-2.5 rounded-xl bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-900/40 transition-colors">
               <UserCheck className="w-4 h-4" />
             </div>
           </div>
-          <div className="font-display text-3xl font-bold text-white mb-1">
+          <div className="font-display text-3xl font-extrabold text-white mb-2 tracking-tight">
             {kpis?.attendanceRate ?? 88}%
           </div>
-          <div className="text-[11px] text-emerald-400/90 font-mono flex items-center justify-between">
-            <span className="text-slate-400">Classroom + Zoom combined</span>
-            <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-emerald-400" />
+          <div className="text-xs text-slate-400 flex items-center justify-between">
+            <span>Combined Lab + Remote</span>
+            <ArrowUpRight className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-emerald-400" />
           </div>
         </Link>
 
-        {/* KPI 4: Fee Collections / Academic Health Button */}
+        {/* KPI 4: Fee Collections or Academic Health */}
         {isFinancialRole ? (
           <Link 
             href="/fees"
-            className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-amber-500/40 hover:bg-slate-900/90 transition-all block cursor-pointer"
+            className="p-5 rounded-2xl border border-surface-border bg-surface-card hover:border-brand-500/40 hover:bg-surface-hover transition-all block cursor-pointer group shadow-card"
           >
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-medium uppercase font-mono tracking-wider">Fee Collections</span>
-              <div className="p-2 rounded-xl bg-amber-950/60 text-amber-400 border border-amber-500/20 group-hover:scale-110 transition-transform">
+            <div className="flex items-center justify-between text-slate-400 mb-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Fee Collections</span>
+              <div className="p-2.5 rounded-xl bg-amber-950/40 text-amber-400 border border-amber-500/20 group-hover:bg-amber-900/40 transition-colors">
                 <CreditCard className="w-4 h-4" />
               </div>
             </div>
-            <div className="font-display text-3xl font-bold text-white mb-1">
+            <div className="font-display text-3xl font-extrabold text-white mb-2 tracking-tight">
               ₹{(kpis?.feeTotalCollected || 0).toLocaleString('en-IN')}
             </div>
-            <div className="text-[11px] text-amber-400 font-mono flex items-center justify-between">
-              <span>{kpis?.overdueEmiCount || 0} overdue &bull; ₹{(kpis?.overdueEmiAmount || 0).toLocaleString('en-IN')}</span>
-              <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-amber-400" />
+            <div className="text-xs text-amber-400/90 flex items-center justify-between">
+              <span>{kpis?.overdueEmiCount || 0} installments overdue</span>
+              <ArrowUpRight className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-amber-400" />
             </div>
           </Link>
         ) : (
           <Link
             href="/students"
-            className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl relative overflow-hidden group hover:border-cyan-500/40 hover:bg-slate-900/90 transition-all block cursor-pointer"
+            className="p-5 rounded-2xl border border-surface-border bg-surface-card hover:border-brand-500/40 hover:bg-surface-hover transition-all block cursor-pointer group shadow-card"
           >
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-medium uppercase font-mono tracking-wider">Academic Health</span>
-              <div className="p-2 rounded-xl bg-cyan-950/60 text-cyan-400 border border-cyan-500/20 group-hover:scale-110 transition-transform">
+            <div className="flex items-center justify-between text-slate-400 mb-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Academic Health</span>
+              <div className="p-2.5 rounded-xl bg-purple-950/40 text-purple-400 border border-purple-500/20 group-hover:bg-purple-900/40 transition-colors">
                 <ShieldCheck className="w-4 h-4" />
               </div>
             </div>
-            <div className="font-display text-3xl font-bold text-emerald-400 mb-1">
-              Optimal
+            <div className="font-display text-3xl font-extrabold text-emerald-400 mb-2 tracking-tight">
+              Healthy
             </div>
-            <div className="text-[11px] text-slate-400 font-mono flex items-center justify-between">
-              <span>{kpis?.activeStudents ?? 0} enrolled students active</span>
-              <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-cyan-400" />
+            <div className="text-xs text-slate-400 flex items-center justify-between">
+              <span>{kpis?.activeStudents ?? 0} active student profiles</span>
+              <ArrowUpRight className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-purple-400" />
             </div>
           </Link>
         )}
       </div>
 
-      {/* Critical Operational Risk Alerts */}
+      {/* Operational Attention Required Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-400 animate-bounce" />
-            <h3 className="font-display text-base font-bold text-white">
-              Critical Institutional Signals & Early Warnings
+          <div className="flex items-center gap-2.5">
+            <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+            <h3 className="font-display text-base font-bold text-white tracking-tight">
+              Operational Priority Notices
             </h3>
           </div>
-          <span className="text-xs text-slate-400 font-mono">
-            Triggered automatically from DB pattern detection
+          <span className="text-xs text-slate-400">
+            Attendance thresholds & installment due dates
           </span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Signal 1: Java Batch 3+ Absences & EMI Due */}
+          {/* Notice 1: Multiple Absences */}
           {(user?.role === 'owner' || user?.role === 'counselor') && (
-            <div className="p-5 rounded-2xl border border-rose-500/40 bg-rose-950/20 backdrop-blur-xl flex flex-col justify-between">
+            <div className="p-5 rounded-2xl border border-rose-900/30 bg-rose-950/10 flex flex-col justify-between shadow-card">
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
-                    <span className="text-xs font-mono font-bold text-rose-300 uppercase">
-                      High Drop-off Probability Signal
+                    <AlertTriangle className="w-4 h-4 text-rose-400" />
+                    <span className="text-xs font-semibold text-rose-300">
+                      Attendance Retention Advisory
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800">
-                    Java Batch Alert
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-rose-900/40 text-rose-300 border border-rose-800/40">
+                    Action Needed
                   </span>
                 </div>
 
                 <h4 className="text-sm font-semibold text-white mb-1">
-                  Students with ≥ 3 Missed Classes AND EMI Due This Week
+                  Students with 3+ Missed Sessions this Week
                 </h4>
-                <p className="text-xs text-slate-300/90 leading-relaxed mb-4">
-                  Correlated absenteeism with impending payment due-dates indicates immediate dropout risk.
+                <p className="text-xs text-slate-300/80 leading-relaxed mb-4">
+                  Students who missed multiple sessions require counselor outreach to provide catch-up lecture recordings and prevent dropouts.
                 </p>
 
                 <div className="space-y-2 mb-4">
                   {dualRiskStudents.length > 0 ? dualRiskStudents.map((st: any) => (
                     <div
                       key={st.id}
-                      className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs"
+                      className="p-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-between text-xs"
                     >
                       <div>
                         <div className="font-semibold text-white flex items-center gap-2">
                           {st.name}
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-950/60 text-rose-400 border border-rose-800/60">
-                            {st.missed_classes} classes missed
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-800/50">
+                            {st.missed_classes} missed
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-400 mt-0.5">
-                          EMI Due: <span className="text-amber-400 font-mono">{st.due_date || st.emi_due_date}</span> &bull; ₹{(st.due_amount || st.emi_amount)?.toLocaleString('en-IN')}
+                          Course fee due: <span className="text-slate-200 font-medium">₹{(st.due_amount || st.emi_amount)?.toLocaleString('en-IN')}</span> &bull; {st.due_date || st.emi_due_date}
                         </div>
                       </div>
 
                       <a
                         href={`https://wa.me/${st.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                          `Hi ${st.name}, this is from InstiPilot Academy. We noticed you missed recent classes in the Java batch. Please let us know if you need any academic assistance or guidance regarding your course.`
+                          `Hi ${st.name}, this is from InstiPilot Academy office. We noticed you missed recent classes in the batch. Please let us know if you need any academic assistance or guidance regarding your course.`
                         )}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="py-1 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+                        className="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center gap-1.5 transition-colors shadow-subtle"
                       >
-                        <Phone className="w-3 h-3" />
-                        Outreach
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>Message</span>
                       </a>
                     </div>
                   )) : (
-                    <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-400 text-center">
-                      No high-risk students detected at this time.
+                    <div className="p-3 rounded-xl bg-surface-card border border-surface-border text-xs text-slate-400 text-center">
+                      No high-risk attendance flags at this time.
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="text-[11px] text-slate-400 font-mono pt-2 border-t border-rose-900/40 flex items-center justify-between">
+              <div className="text-xs text-slate-400 pt-3 border-t border-rose-900/30 flex items-center justify-between">
                 <span>Rohan Gupta (5 missed) &bull; Ananya Deshmukh (3 missed)</span>
-                <span className="text-cyan-400">Target for Copilot Drafting</span>
+                <Link href="/outbox" className="text-brand-400 hover:text-brand-300 font-medium">Review Outbox &rarr;</Link>
               </div>
             </div>
           )}
 
-          {/* Signal 2: Consecutive Missed EMIs */}
+          {/* Notice 2: Overdue Installments */}
           {(user?.role === 'owner' || user?.role === 'accounts') && (
-            <div className="p-5 rounded-2xl border border-amber-500/40 bg-amber-950/20 backdrop-blur-xl flex flex-col justify-between">
+            <div className="p-5 rounded-2xl border border-amber-900/30 bg-amber-950/10 flex flex-col justify-between shadow-card">
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
-                    <span className="text-xs font-mono font-bold text-amber-300 uppercase">
-                      Financial Default Risk Alert
+                    <CreditCard className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-semibold text-amber-300">
+                      Fee Clearance Notice
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
-                    2+ Overdue EMIs
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-900/40 text-amber-300 border border-amber-800/40">
+                    Accounts Review
                   </span>
                 </div>
 
                 <h4 className="text-sm font-semibold text-white mb-1">
                   Students with Consecutive Missed Installments
                 </h4>
-                <p className="text-xs text-slate-300/90 leading-relaxed mb-4">
-                  Account flag: Student has missed two consecutive payment cycles. Lab and recording access review recommended.
+                <p className="text-xs text-slate-300/80 leading-relaxed mb-4">
+                  Accounts advisory: Follow up with students on pending second installment payment to prevent access disruption.
                 </p>
 
                 <div className="space-y-2 mb-4">
-                  <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs">
+                  <div className="p-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-between text-xs">
                     <div>
                       <div className="font-semibold text-white flex items-center gap-2">
                         Amit Patel
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-800/60">
-                          2 overdue cycles
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-950 text-amber-400 border border-amber-800/50">
+                          2 cycles overdue
                         </span>
                       </div>
                       <div className="text-[11px] text-slate-400 mt-0.5">
-                        Batch: Python Cohort 4 &bull; Total Pending: <span className="text-rose-400 font-mono font-bold">₹23,334</span>
+                        Course: Python Engineering &bull; Balance: <span className="text-amber-300 font-semibold">₹23,334</span>
                       </div>
                     </div>
 
                     <Link
                       href="/fees"
-                      className="py-1 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs flex items-center gap-1 transition-colors"
+                      className="py-1.5 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs flex items-center gap-1 transition-colors shadow-subtle"
                     >
-                      Inspect EMIs
+                      <span>Review EMIs</span>
                     </Link>
                   </div>
                 </div>
               </div>
 
-              <div className="text-[11px] text-slate-400 font-mono pt-2 border-t border-amber-900/40 flex items-center justify-between">
+              <div className="text-xs text-slate-400 pt-3 border-t border-amber-900/30 flex items-center justify-between">
                 <span>Amit Patel (Python Cohort 4 &bull; ₹23,334 overdue)</span>
-                <span className="text-amber-400">Notice Pending</span>
+                <Link href="/fees" className="text-amber-400 hover:text-amber-300 font-medium">Finance Portal &rarr;</Link>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Main Grid: Today's Classes & Attendance Chart */}
+      {/* Main Grid: Today's Classes & Attendance Velocity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Today's Classes (2 cols) */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-display text-base font-bold text-white flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-cyan-400" />
-              Live Institute Schedule & Batches
+              <Calendar className="w-4 h-4 text-brand-400" />
+              Today's Lectures & Batch Schedule
             </h3>
             <Link
               href="/batches"
-              className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+              className="text-xs text-brand-400 hover:text-brand-300 font-medium flex items-center gap-1"
             >
               All Batches <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {STATIC_TODAY_CLASSES.map((b: any) => (
               <div
                 key={b.id}
-                className="p-4 rounded-xl border border-slate-800 bg-slate-900/80 hover:border-slate-700 transition-colors flex flex-col justify-between"
+                className="p-5 rounded-2xl border border-surface-border bg-surface-card hover:border-surface-hover hover:shadow-card transition-all flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60">
                       {b.start_time} - {b.end_time}
                     </span>
-                    <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded ${
+                    <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
                       b.mode === 'hybrid'
-                        ? 'bg-cyan-950 text-cyan-400 border border-cyan-500/30'
+                        ? 'bg-blue-950/60 text-blue-400 border border-blue-500/20'
                         : b.mode === 'online'
-                        ? 'bg-violet-950 text-violet-400 border border-violet-500/30'
-                        : 'bg-emerald-950 text-emerald-400 border border-emerald-500/30'
+                        ? 'bg-indigo-950/60 text-indigo-400 border border-indigo-500/20'
+                        : 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/20'
                     }`}>
                       {b.mode}
                     </span>
                   </div>
 
                   <h4 className="font-semibold text-sm text-white mb-1">{b.batch_name}</h4>
-                  <div className="text-xs text-slate-400 flex items-center gap-1.5 mb-2">
-                    <span>{b.course_name}</span>
+                  <div className="text-xs text-slate-400 mb-3">
+                    {b.course_name}
                   </div>
 
-                  <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono mb-3">
-                    <span className="flex items-center gap-1">
+                  <div className="flex items-center gap-4 text-xs text-slate-400 mb-4">
+                    <span className="flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-slate-500" />
                       {b.enrolled_students} / {b.max_seats} seats
                     </span>
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1.5">
                       <Building className="w-3.5 h-3.5 text-slate-500" />
                       {b.room_name || 'Virtual Studio'}
                     </span>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Trainer: <span className="text-slate-200">{b.trainer_name}</span></span>
+                <div className="pt-3 border-t border-surface-border flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Trainer: <span className="text-slate-200 font-medium">{b.trainer_name}</span></span>
                   <Link
                     href={`/attendance?batchId=${b.id}`}
-                    className="text-cyan-400 hover:text-cyan-300 text-[11px] font-medium"
+                    className="text-brand-400 hover:text-brand-300 font-medium"
                   >
                     Attendance &rarr;
                   </Link>
@@ -523,16 +524,18 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column: Attendance Trend Chart & Outbox Approvals */}
+        {/* Right Column: Attendance Trend Chart & Outbox Queue */}
         <div className="space-y-6">
           {/* Attendance Chart */}
-          <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-display text-sm font-bold text-white flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-emerald-400" />
-                Attendance Velocity
-              </h4>
-              <span className="text-[10px] font-mono text-slate-400">Past 8 sessions</span>
+          <div className="p-5 rounded-2xl border border-surface-border bg-surface-card shadow-card">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h4 className="font-display text-sm font-bold text-white flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-emerald-400" />
+                  Attendance Attendance Trend
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">Rolling average over past 8 sessions</p>
+              </div>
             </div>
 
             <div className="h-44 w-full">
@@ -540,17 +543,17 @@ export default function DashboardPage() {
                 <AreaChart data={STATIC_ATTENDANCE_CHART}>
                   <defs>
                     <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00F0FF" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#00F0FF" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={9} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={9} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1f293d" />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '11px' }}
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '11px', color: '#fff' }}
                   />
-                  <Area type="monotone" dataKey="present" stroke="#00F0FF" fillOpacity={1} fill="url(#colorPresent)" />
+                  <Area type="monotone" dataKey="present" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#colorPresent)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -558,52 +561,55 @@ export default function DashboardPage() {
 
           {/* Pending Human Approvals Queue */}
           {user?.role !== 'trainer' && (
-            <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl space-y-3">
+            <div className="p-5 rounded-2xl border border-surface-border bg-surface-card shadow-card space-y-3.5">
               <div className="flex items-center justify-between">
-                <h4 className="font-display text-sm font-bold text-white flex items-center gap-2">
-                  <Send className="w-4 h-4 text-cyan-400" />
-                  Action Outbox Queue
-                </h4>
-                <Link href="/outbox" className="text-xs text-cyan-400 hover:underline">
-                  All ({pendingOutbox.length})
+                <div>
+                  <h4 className="font-display text-sm font-bold text-white flex items-center gap-2">
+                    <Send className="w-4 h-4 text-brand-400" />
+                    Dispatch Approval Queue
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Parent and student WhatsApp dispatches</p>
+                </div>
+                <Link href="/outbox" className="text-xs text-brand-400 hover:underline font-medium">
+                  View All ({pendingOutbox.length})
                 </Link>
               </div>
 
               <div className="space-y-2.5">
                 {pendingOutbox.length === 0 ? (
-                  <div className="text-center py-6 text-xs text-slate-500">
-                    No pending draft messages in queue
+                  <div className="text-center py-6 text-xs text-slate-400">
+                    No pending messages waiting for authorization
                   </div>
                 ) : (
                   pendingOutbox.map((msg: any) => (
                     <div
                       key={msg.id}
-                      className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs space-y-1.5"
+                      className="p-3.5 rounded-xl bg-surface-darkest/90 border border-surface-border text-xs space-y-2"
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-slate-200">{msg.recipient_name}</span>
-                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                          msg.status === 'draft' ? 'bg-amber-950 text-amber-400 border border-amber-800/60' : 'bg-emerald-950 text-emerald-400'
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                          msg.status === 'draft' ? 'bg-amber-950/70 text-amber-300 border border-amber-800/50' : 'bg-emerald-950/70 text-emerald-300'
                         }`}>
                           {msg.status?.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-slate-300/80 line-clamp-2 leading-relaxed">
                         {msg.message_text}
                       </p>
                       
                       {msg.status === 'draft' && (
-                        <div className="pt-1 flex items-center justify-between">
-                          <span className="text-[10px] text-slate-500 font-mono">
+                        <div className="pt-1.5 flex items-center justify-between">
+                          <span className="text-[10px] text-slate-400">
                             WhatsApp &bull; {msg.recipient_phone}
                           </span>
                           <button
                             onClick={() => handleApprove(msg)}
                             disabled={approvingId === msg.id}
-                            className="py-1 px-2.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-medium flex items-center gap-1 transition-colors"
+                            className="py-1 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-medium flex items-center gap-1.5 transition-colors shadow-subtle"
                           >
-                            <CheckCircle className="w-3 h-3" />
-                            {approvingId === msg.id ? 'Sending...' : 'Approve & Send'}
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            {approvingId === msg.id ? 'Sending...' : 'Authorize & Send'}
                           </button>
                         </div>
                       )}
